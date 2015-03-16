@@ -16,6 +16,13 @@ var urlencodedParser = bodyParser.urlencoded({ extended: false });
 
 module.exports = function (app) {
 
+    //// ▶▶ enable cors ◀◀ ////
+    app.use(function(req, res, next) {
+        res.header("Access-Control-Allow-Origin", "*");
+        res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+        next();
+    });
+
     //// ▶▶ airports ◀◀ ////
     app.get('/api/airport/findAll',function(req,res) {
         if (req.query.search) {
