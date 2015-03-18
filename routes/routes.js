@@ -49,7 +49,7 @@ module.exports = function (app) {
     //// ▶▶ flightPath ◀◀ ////
     app.get('/api/flightPath/findAll',function(req,res){
         if(req.query.from && req.query.to && req.query.leave){
-            flightPath.findAll(req.query.from, req.query.to,req.query.leave, req.query.ret,function (err, done) {
+            flightPath.findAll(req.query.from, req.query.to,req.query.leave, function (err, done) {
                 if (err) {
                     res.status = 400;
                     res.send(err);

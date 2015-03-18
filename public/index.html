@@ -27,8 +27,8 @@
                 </div>
                 <div class="panel-body">
                     <div
-                            class="col-sm-2"><img src="images/slouchlogo.png" height="75" width="69"
-                                                  style="border:1px solid red;"></div>
+                            class="col-sm-2"><img src="images/slouchlogocolor.png" height="75" width="69"
+                                                  style="border:1px solid #337ab7;"></div>
                     <div class="col-sm-10">
                     <form class="form-horizontal" role="form" name="travelForm" ng-submit="findFlights()" novalidate>
                         <div class="form-group" ng-class="{ 'has-error' : travelForm.from.$invalid && !travelForm.from.$pristine && travelForm.to.$invalid && !travelForm.to.$pristine }">
@@ -128,24 +128,29 @@
         <div class="col-md-8">
             <div class="panel panel-primary" ng-show="!empty">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Flight Routes</h3>
+                    <h3 class="panel-title">Available Flights</h3>
                 </div>
                 <div class="panel-body">
+                    <h4>Outbound Leg</h4>
                     <table class="table table-striped">
                         <thead>
                         <tr>
-                            <th>From</th>
-                            <th>Arriving</th>
                             <th>Airline</th>
+                            <th>Flight</th>
+                            <th>Departure</th>
+                            <th>From</th>
+                            <th>To</th>
                             <th>Aircraft</th>
-                            <th>Info</th>
+                            <th>Reservation</th>
                         </tr>
                         </thead>
                         <tbody>
-                        <tr ng-repeat="row in rowCollection">
+                        <tr ng-repeat="row in rowCollectionLeave">
+                            <td>{{row.name}}</td>
+                            <td>{{row.flight}}</td>
+                            <td>{{row.utc}}</td>
                             <td>{{row.sourceairport | uppercase}}</td>
                             <td>{{row.destinationairport | uppercase}}</td>
-                            <td>{{row.name}}</td>
                             <td>{{row.equipment}}</td>
                             <td>
                                 <button class="btn btn-sm btn-primary" type="button">Reserve</button>
@@ -159,6 +164,41 @@
                         </tr>
                         </tbody>
                     </table>
+                    <div ng-show="!retEmpty">
+                    <h4>Return Leg</h4>
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th>Airline</th>
+                            <th>Flight</th>
+                            <th>Departure</th>
+                            <th>From</th>
+                            <th>To</th>
+                            <th>Aircraft</th>
+                            <th>Reservation</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr ng-repeat="rowRet in rowCollectionRet">
+                            <td>{{rowRet.name}}</td>
+                            <td>{{rowRet.flight}}</td>
+                            <td>{{rowRet.utc}}</td>
+                            <td>{{rowRet.sourceairport | uppercase}}</td>
+                            <td>{{rowRet.destinationairport | uppercase}}</td>
+                            <td>{{rowRet.equipment}}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" type="button">Reserve</button>
+                            </td>
+                            <td>
+                                <button type="button" ng-click="removeRow(rowRet)" class="btn btn-sm btn-danger">
+                                    <i class="glyphicon glyphicon-remove-circle">
+                                    </i>
+                                </button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    </div>
                 </div>
                 <div class="panel-footer">
                 </div>
