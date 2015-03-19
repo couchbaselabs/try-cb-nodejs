@@ -12,7 +12,6 @@ testapp.controller('flightController',function($scope,$http){
         }).then(function(response){
             return response.data;
         });
-
     }
     $scope.findFlights = function () {
         $scope.empty = true;
@@ -33,7 +32,6 @@ testapp.controller('flightController',function($scope,$http){
                 params: {from: this.toName, to: this.fromName, leave: this.ret}
             }).then(function (responseRet) {
                 if (responseRet.data.length > 0) {
-                    console.log(JSON.stringify(responseRet.data));
                     $scope.retEmpty = false;
                 }
                 for (var j = 0; j < responseRet.data.length; j++) {
@@ -42,6 +40,31 @@ testapp.controller('flightController',function($scope,$http){
             });
         }
     }
+
+    $scope.removeRow=function(row) {
+        var index = $scope.rowCollectionLeave.indexOf(row);
+        if (index !== -1) {
+            $scope.rowCollectionLeave.splice(index, 1);
+        }
+    }
+
+    $scope.selectRow=function(row){
+        $scope.rowCollectionLeave=[];
+        $scope.rowCollectionLeave.push(row);
+    }
+
+    $scope.removeRowRet = function removeRowRet(row) {
+        var index = $scope.rowCollectionRet.indexOf(row);
+        if (index !== -1) {
+            $scope.rowCollectionRet.splice(index, 1);
+        }
+    }
+
+    $scope.selectRowRet=function(row){
+        $scope.rowCollectionRet=[];
+        $scope.rowCollectionRet.push(row);
+    }
+
     $scope.dbg=function(){
         alert("DEBUG:"+ this.fromName +"::"+ this.toName +"::"+ this.leave +"::"+ this.ret);
     }

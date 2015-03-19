@@ -153,7 +153,7 @@
                             <td>{{row.destinationairport | uppercase}}</td>
                             <td>{{row.equipment}}</td>
                             <td>
-                                <button class="btn btn-sm btn-primary" type="button">Reserve</button>
+                                <button class="btn btn-sm btn-primary" ng-click="selectRow(row)" type="button">Choose</button>
                             </td>
                             <td>
                                 <button type="button" ng-click="removeRow(row)" class="btn btn-sm btn-danger">
@@ -187,10 +187,11 @@
                             <td>{{rowRet.destinationairport | uppercase}}</td>
                             <td>{{rowRet.equipment}}</td>
                             <td>
-                                <button class="btn btn-sm btn-primary" type="button">Reserve</button>
+                                <button class="btn btn-sm btn-primary" ng-click="selectRowRet(rowRet)" type="button">Choose
+                                </button>
                             </td>
                             <td>
-                                <button type="button" ng-click="removeRow(rowRet)" class="btn btn-sm btn-danger">
+                                <button type="button" ng-click="removeRowRet(rowRet)" class="btn btn-sm btn-danger">
                                     <i class="glyphicon glyphicon-remove-circle">
                                     </i>
                                 </button>

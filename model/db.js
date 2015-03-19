@@ -3,7 +3,7 @@
  * @type {exports}
  */
 var couchbase = require('couchbase');
-var endPoint = '192.168.41.101:8091';
+var endPoint = '192.168.42.101:8091';
 var myCluster = new couchbase.Cluster(endPoint);
 var myBucket = myCluster.openBucket('default');
 var db=myBucket;
@@ -82,7 +82,7 @@ module.exports.delete = function (key, done) {
  * @param done
  */
 module.exports.enableN1QL=function(done){
-        db.enableN1ql('192.168.41.101:8093');
+        db.enableN1ql('192.168.42.101:8093');
         done({n1ql:"enabled"});
     }
 
