@@ -5,6 +5,8 @@
   "dependencies": {
     "express": "*",
     "couchbase":"*",
-    "body-parser":"*"
+    "body-parser":"*",
+    "ws":"*",
+    "request":"*"
   }
 }

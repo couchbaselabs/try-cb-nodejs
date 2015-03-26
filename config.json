@@ -1,0 +1,19 @@
+{
+  "couchbase":{
+    "endPoint":"192.168.42.101:8091",
+    "n1qlService":"192.168.42.101:8093",
+    "hostName":"127.0.0.1",
+    "bucket":"default",
+    "user":"Administrator",
+    "password":"password",
+    "dataPath":"/opt/couchbase/var/lib/couchbase/data",
+    "indexPath":"/opt/couchbase/var/lib/couchbase/data",
+    "indexType":"views",
+    "showQuery":true
+  },
+  "application":{
+    "httpPort":3000,
+    "webSocketPort":3001,
+    "dataSource":"embedded"
+  }
+}
