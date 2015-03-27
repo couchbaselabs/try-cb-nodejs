@@ -13,30 +13,6 @@ var timerAvailable;
 var config = require('./../../config');
 var request=require('request');
 var db=require('./../db');
-var WebSocketServer = require('ws').Server;
-var wss = new WebSocketServer({port: config.application.webSocketPort});
-var EventEmitter = require('events').EventEmitter;
-var messageBus = new EventEmitter();
-messageBus.setMaxListeners(100);
-
-/**
- *
- */
-wss.on('connection', function(ws) {
-    ws.on('message', function(message) {
-        console.log('received: %s', message);
-    });
-
-    var wsListener = function(data){
-        ws.send(data)
-    }
-
-    messageBus.on('message', wsListener)
-
-    ws.on('close', function(){
-        messageBus.removeListener('message', wsListener)
-    })
-});
 
 /**
  *
@@ -138,13 +114,13 @@ function load(category){
  */
 function batch(category){
     timerBatch=setInterval(function () {
-                          if (currentCount < threshold) {
-                              //console.log("INCR:",currentCount);
+                          if (currentCount < threshold && active) {
+                              // console.log("INCR:",currentCount);
                               currentCount++;
                               load(category);
                           } else {
                               clearInterval(timerBatch);
-                              //console.log("TMR:STOPPED");
+                              // console.log("TMR:STOPPED");
                           }
                       }, testInterval
     );
@@ -251,10 +227,29 @@ function buildSchedule(airline,doc) {
  * @param done
  */
 function provisionInit(done) {
+    var dataPath;
+    var indexPath;
+    if(config.couchbase.dataPath!=""){
+
+    }
+    else{
+        if(process.platform=='darwin'){
+            dataPath="/Users/" + process.env.USER + "/Library/Application Support/Couchbase/var/lib/couchbase/data";
+        }else{
+            dataPath="/opt/couchbase/var/lib/couchbase/data";
+        }
+    }
+    if(config.couchbase.indexPath!=""){
+        if(process.platform=='darwin'){
+            indexPath="/Users/" + process.env.USER + "/Library/Application Support/Couchbase/var/lib/couchbase/data";
+        }else{
+            indexPath="/opt/couchbase/var/lib/couchbase/data";
+        }
+    }
     request.post({
                      url: 'http://'+ config.couchbase.endPoint + '/nodes/self/controller/settings',
-                     form: {path: config.couchbase.dataPath,
-                         index_path:config.couchbase.indexPath
+                     form: {path: dataPath,
+                         index_path:indexPath
                      }
                  }, function (err, httpResponse, body) {
         if(err){
@@ -334,33 +329,57 @@ function provisionAdmin(done) {
  * @param done
  */
 function provisionBucket(done) {
-    request.post({
-                     url: 'http://'+ config.couchbase.endPoint+'/pools/default/buckets',
-                     form: {flushEnabled:'1',
-                         threadsNumber:'3',
-                         replicaIndex:'0',
-                         replicaNumber:'0',
-                         evictionPolicy:'valueOnly',
-                         ramQuotaMB:'597',
-                         bucketType:'membase',
-                         name:config.couchbase.bucket,
-                         authType:'sasl',
-                         saslPassword:null
-                     },
-                 auth: {
-        'user': config.couchbase.user,
-            'pass': config.couchbase.password,
-            'sendImmediately': true
-    }
-                 }, function (err, httpResponse, body) {
-        if(err){
-            done(err,null);
-            return;
-        }
-        console.log({'provisionBucket':httpResponse.statusCode});
-        done(null,httpResponse.statusCode);
+    if(config.application.dataSource=="repo"){
+        request.post({
+                         url: 'http://'+ config.couchbase.endPoint+'/pools/default/buckets',
+                         form: {flushEnabled:'1',
+                             threadsNumber:'3',
+                             replicaIndex:'0',
+                             replicaNumber:'0',
+                             evictionPolicy:'valueOnly',
+                             ramQuotaMB:'597',
+                             bucketType:'membase',
+                             name:config.couchbase.bucket,
+                             authType:'sasl',
+                             saslPassword:null
+                         },
+                         auth: {
+                             'user': config.couchbase.user,
+                             'pass': config.couchbase.password,
+                             'sendImmediately': true
+                         }
+                     }, function (err, httpResponse, body) {
+            if(err){
+                done(err,null);
+                return;
+            }
+            console.log({'provisionBucket':httpResponse.statusCode});
+            done(null,httpResponse.statusCode);
 
-    });
+        });
+    }
+    if(config.application.dataSource=="embedded"){
+        request.post({
+                         url: 'http://'+ config.couchbase.endPoint+'/sampleBuckets/install',
+                         headers: {
+                             'Content-Type': 'application/x-www-form-urlencoded'
+                         },
+                         form: JSON.stringify([config.couchbase.bucket]),
+                         auth: {
+                             'user': config.couchbase.user,
+                             'pass': config.couchbase.password,
+                             'sendImmediately': true
+                         }
+                     }, function (err, httpResponse, body) {
+            if(err){
+                console.log("DEBUG:",err);
+                done(err,null);
+                return;
+            }
+            console.log({'provisionBucket':httpResponse.statusCode});
+            done(null,httpResponse.statusCode);
+        });
+    }
 }
 
 /**
@@ -400,7 +419,8 @@ function provision(done) {
                                         if(bucket){
                                            isAvailable(function(ready){
                                                if(ready){
-                                                   done(null,{'cb':'provisioned'});
+                                                   console.log({'bucket':'built'});
+                                                   done(null,{'bucket':'built'});
                                                }
                                            });
                                         }
@@ -444,12 +464,8 @@ function loadData(done){
                                     return;
                                 }
                                 if(indexed){
-                                    isActive(5,function(err,idle){
-                                        if(idle){
                                             console.log({'bucket':config.couchbase.bucket +' loaded'});
                                             done(null,{'bucket':'loaded'});
-                                        }
-                                    });
                                 }
                             });
                         }
@@ -459,34 +475,65 @@ function loadData(done){
         }
     });
 }
+function flow (wait, done){
+    console.log({"waiting":parseInt(wait)/1000+ ' seconds for bucket to finish provision'});
+    setTimeout(function(){
+        done(true);
+    },wait);
+}
 
 
 /**
  *
  * @param done
  */
-function build(done){
+function provisionCB(done){
     provision(function(err,cluster){
         if(err){
             done(err,null);
+            return;
         }
         if(cluster){
             db.init(function(ready){
                 if(err){
                     done(err,null);
+                    return;
                 }
                 if(ready){
-                    loadData(function(err,loaded){
-                        if(err){
-                            done(err,null);
-                        }
-                        if(loaded){
-                            done(null,{"environment":"built"});
-                        }
-                    });
+                    if(config.application.dataSource=="repo") {
+                        loadData(function (err, loaded) {
+                            if (err) {
+                                done(err, null);
+                                return;
+                            }
+                            if (loaded) {
+                                done(null, {"environment": "built"});
+                                return;
+                            }
+                        });
+                    }
+                    if(config.application.dataSource=="embedded") {
+                        flow(60000,function(waited){
+                            if(waited){
+                                db.init(function(waitedAgain) {
+                                    if (waitedAgain) {
+                                        buidIndexes(function(err,indexed){
+                                            if(err){
+                                                done(err,null);
+                                                return;
+                                            }
+                                            if(indexed){
+                                                done(null, {"environment": "built"});
+                                                return;
+                                            }
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    }
                 }
             });
-
         }
     });
 }
@@ -495,4 +542,5 @@ module.exports.ingest=ingest;
 module.exports.buildIndexes=buidIndexes;
 module.exports.provision=provision;
 module.exports.loadData=loadData;
-module.exports.build=build;
+module.exports.provisionCB=provisionCB;
+module.exports.provisionBucket=provisionBucket;

@@ -6,7 +6,6 @@
     "express": "*",
     "couchbase":"*",
     "body-parser":"*",
-    "ws":"*",
     "request":"*"
   }
 }
