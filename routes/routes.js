@@ -23,7 +23,7 @@ module.exports = function (app) {
         next();
     });
 
-    //// ▶▶ airports ◀◀ ////
+    //// ▶▶ airports ◀◀ ////w
     app.get('/api/airport/findAll',function(req,res) {
         if (req.query.search) {
             airport.findAll(req.query.search, function (err, done) {
@@ -62,8 +62,8 @@ module.exports = function (app) {
     });
 
     //// ▶▶ provision ◀◀ ////
-    app.post('/api/status/build',function(req,res){
-        rawImport.build(function(err,done){
+    app.post('/api/status/provisionCB',function(req,res){
+        rawImport.provisionCB(function(err,done){
             if(err){
                 res.status=400;
                 res.send(err);
@@ -127,6 +127,18 @@ module.exports = function (app) {
 
     app.post('/api/status/provision',function(req,res){
         rawImport.provision(function(err,done){
+            if(err){
+                res.status=400;
+                res.send(err);
+                return;
+            }
+            res.status=202;
+            res.send(done);
+        })
+    });
+
+    app.post('/api/status/provisionBucket',function(req,res){
+        rawImport.provisionBucket(function(err,done){
             if(err){
                 res.status=400;
                 res.send(err);
