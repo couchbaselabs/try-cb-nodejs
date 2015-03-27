@@ -15,7 +15,8 @@ var request=require('request');
 /**
  * 
  */
-function init(){
+function init(done){
+    console.log({init:"check"});
     request.get({
                     url:"http://" + config.couchbase.endPoint + "/pools/default/buckets/" + config.couchbase.bucket + "/stats",auth: {
             'user': config.couchbase.user,
@@ -23,12 +24,16 @@ function init(){
             'sendImmediately': true
         }},function (err, response, body) {
         if(err){
+            console.log({init:"not ready "+err});
+            done(false);
             return;
         }
         if(response.statusCode!=404){
                 myBucket = myCluster.openBucket(bucket);
                 db=myBucket;
                 enableN1QL(function(){});
+                console.log({init:"ready"+ response.statusCode});
+                done(true);
                 return;
         }
     });
@@ -39,7 +44,7 @@ function enableN1QL(done){
     done({n1ql:"enabled"});
 }
 
-init();
+init(function(){});
 
 /**
  *

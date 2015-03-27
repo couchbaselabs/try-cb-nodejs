@@ -3,12 +3,12 @@
     "endPoint":"192.168.42.101:8091",
     "n1qlService":"192.168.42.101:8093",
     "hostName":"127.0.0.1",
-    "bucket":"default",
+    "bucket":"travel",
     "user":"Administrator",
     "password":"password",
     "dataPath":"/opt/couchbase/var/lib/couchbase/data",
     "indexPath":"/opt/couchbase/var/lib/couchbase/data",
-    "indexType":"views",
+    "indexType":"view",
     "showQuery":true
   },
   "application":{

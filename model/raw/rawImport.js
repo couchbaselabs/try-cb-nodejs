@@ -19,6 +19,9 @@ var EventEmitter = require('events').EventEmitter;
 var messageBus = new EventEmitter();
 messageBus.setMaxListeners(100);
 
+/**
+ *
+ */
 wss.on('connection', function(ws) {
     ws.on('message', function(message) {
         console.log('received: %s', message);
@@ -50,7 +53,7 @@ function ingest(category, done) {
         }
         active=true;
         itemCount=raw[category].length-1;
-        console.log("LOAD:",category);
+        console.log({'category':category + ' load'});
         batch(category);
         isActive(5,function(err,idle){
             if(err){
@@ -58,7 +61,7 @@ function ingest(category, done) {
                 return;
             }
             if(idle){
-                console.log({'category':category + 'loaded'});
+                console.log({'category':category + ' loaded'});
                 done(null,{'category':category});
                 return;
             }
@@ -72,10 +75,10 @@ function ingest(category, done) {
  */
 function buidIndexes(done){
     var indexesCB=['faa','icao','city','airportname','type','sourceairport'];
-    db.query('CREATE PRIMARY INDEX on default',function(err,res){});
+    db.query('CREATE PRIMARY INDEX on ' + config.couchbase.bucket + ' USING '+ config.couchbase.indexType,function(err,res){});
     var cbCount=indexesCB.length-1;
     for(var i=0; i<indexesCB.length; i++){
-        var sql = ('CREATE INDEX def_' + indexesCB[i]+ ' on default('+indexesCB[i]+')');
+        var sql = ('CREATE INDEX def_' + indexesCB[i]+ ' ON ' + config.couchbase.bucket + '('+indexesCB[i]+') USING ' + config.couchbase.indexType);
         db.query(sql,function(err,res){
             if(err){
                 done({'err':"can't create index "+indexesCB[i]+ err},null);
@@ -124,7 +127,7 @@ function load(category){
             if(currentCount==0){
                 active=false;
             }
-            console.log("BUFFER DECREASE:",currentCount);
+            //console.log("BUFFER DECREASE:",currentCount);
         }
     });
 }
@@ -136,12 +139,12 @@ function load(category){
 function batch(category){
     timerBatch=setInterval(function () {
                           if (currentCount < threshold) {
-                              console.log("INCR:",currentCount);
+                              //console.log("INCR:",currentCount);
                               currentCount++;
                               load(category);
                           } else {
                               clearInterval(timerBatch);
-                              console.log("TMR:STOPPED");
+                              //console.log("TMR:STOPPED");
                           }
                       }, testInterval
     );
@@ -417,7 +420,6 @@ function provision(done) {
  * @param done
  */
 function loadData(done){
-    db.init();
     ingest("airports",function(err,airports){
         if(err){
             done(err,null);
@@ -444,6 +446,7 @@ function loadData(done){
                                 if(indexed){
                                     isActive(5,function(err,idle){
                                         if(idle){
+                                            console.log({'bucket':config.couchbase.bucket +' loaded'});
                                             done(null,{'bucket':'loaded'});
                                         }
                                     });
@@ -457,6 +460,7 @@ function loadData(done){
     });
 }
 
+
 /**
  *
  * @param done
@@ -467,17 +471,24 @@ function build(done){
             done(err,null);
         }
         if(cluster){
-            loadData(function(err,loaded){
+            db.init(function(ready){
                 if(err){
                     done(err,null);
                 }
-                if(loaded){
-                    done(null,{"environment":"built"});
+                if(ready){
+                    loadData(function(err,loaded){
+                        if(err){
+                            done(err,null);
+                        }
+                        if(loaded){
+                            done(null,{"environment":"built"});
+                        }
+                    });
                 }
-            })
+            });
+
         }
     });
-
 }
 
 module.exports.ingest=ingest;

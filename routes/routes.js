@@ -61,7 +61,7 @@ module.exports = function (app) {
         }
     });
 
-    //// ▶▶ status ◀◀ ////
+    //// ▶▶ provision ◀◀ ////
     app.post('/api/status/build',function(req,res){
         rawImport.build(function(err,done){
             if(err){
