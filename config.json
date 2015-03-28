@@ -13,6 +13,6 @@
   },
   "application":{
     "httpPort":3000,
-    "dataSource":"embedded"
+    "dataSource":"repo"
   }
 }
