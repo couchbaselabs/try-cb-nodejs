@@ -26,5 +26,5 @@ A sample application and dataset for getting started with Couchbase 4.0.  The ap
 
 #### POST /api/status/provisionCB [**RETURNS: {JSON OBJECT} indicating complete**]
 --Loads the dataset dynamically based on options in the "config.json" file.   
---If dataset="repo", the application will build a sample bucket called "travel-sample" by loading raw json formatted air travel documents from the file in try-cb/model/raw/rawJsonAir.js and dynamically build scheduling information.  This is useful for learning how to programitically build a bucket, perform ingestions of data and how to become familiar with the CB 2.0 SDK API.  
+--If dataset="repo", the application will build a sample bucket called "travel-sample" by loading raw json formatted air travel documents from the file in try-cb/model/raw/rawJsonAir.js and dynamically build scheduling information.  This is useful for learning how to programitically build a bucket, perform ingestions of data and how to become familiar with the CB SDK API.  
 --If dataset="embedded", the application load the above information from the included sample bucket within couchbase known as "travel-sample"
