@@ -18,7 +18,7 @@ var request=require('request');
 function init(done){
     console.log({init:"check"});
     request.get({
-                    url:"http://" + config.couchbase.endPoint + "/pools/default/buckets/" + config.couchbase.bucket + "/stats",auth: {
+                    url:"http://" + config.couchbase.endPoint + "/pools/default/b/" + config.couchbase.bucket,auth: {
             'user': config.couchbase.user,
             'pass': config.couchbase.password,
             'sendImmediately': true
@@ -28,7 +28,7 @@ function init(done){
             done(false);
             return;
         }
-        if(response.statusCode!=404){
+        if(response.statusCode==200){
                 myBucket = myCluster.openBucket(bucket);
                 db=myBucket;
                 enableN1QL(function(){});

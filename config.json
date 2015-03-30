@@ -3,7 +3,7 @@
     "endPoint":"localhost:8091",
     "n1qlService":"localhost:8093",
     "hostName":"127.0.0.1",
-    "bucket":"travel",
+    "bucket":"travel-sample",
     "user":"Administrator",
     "password":"password",
     "dataPath":"",
@@ -13,6 +13,7 @@
   },
   "application":{
     "httpPort":3000,
-    "dataSource":"repo"
+    "dataSource":"repo",
+    "wait":30000
   }
 }

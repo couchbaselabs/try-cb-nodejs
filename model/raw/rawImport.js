@@ -51,10 +51,10 @@ function ingest(category, done) {
  */
 function buidIndexes(done){
     var indexesCB=['faa','icao','city','airportname','type','sourceairport'];
-    db.query('CREATE PRIMARY INDEX on ' + config.couchbase.bucket + ' USING '+ config.couchbase.indexType,function(err,res){});
+    db.query('CREATE PRIMARY INDEX on `' + config.couchbase.bucket + '` USING '+ config.couchbase.indexType,function(err,res){});
     var cbCount=indexesCB.length-1;
     for(var i=0; i<indexesCB.length; i++){
-        var sql = ('CREATE INDEX def_' + indexesCB[i]+ ' ON ' + config.couchbase.bucket + '('+indexesCB[i]+') USING ' + config.couchbase.indexType);
+        var sql = ('CREATE INDEX def_' + indexesCB[i]+ ' ON `' + config.couchbase.bucket + '`('+indexesCB[i]+') USING ' + config.couchbase.indexType);
         db.query(sql,function(err,res){
             if(err){
                 done({'err':"can't create index "+indexesCB[i]+ err},null);
@@ -62,6 +62,7 @@ function buidIndexes(done){
             if(res){
                 cbCount--;
                 if(cbCount==0){
+                    console.log({'indexes':'built'});
                     done(null,{'indexes':'built'});
                 }
             }
@@ -513,7 +514,7 @@ function provisionCB(done){
                         });
                     }
                     if(config.application.dataSource=="embedded") {
-                        flow(60000,function(waited){
+                        flow(config.application.wait,function(waited){
                             if(waited){
                                 db.init(function(waitedAgain) {
                                     if (waitedAgain) {
