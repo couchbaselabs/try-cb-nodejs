@@ -8,11 +8,11 @@ A sample application and dataset for getting started with Couchbase 4.0.  The ap
  - [2] Install Node.js
  - [3] Make a directory, Clone this Repo, install dependencies, start application.  From a terminal:
  
-      mkidr ~/try-cb 
-      git clone https://github.com/ToddGreenstein/try-cb-nodejs.git ~/try-cb
-      cd ~/try-cb
-      npm install
-      node app.js
+      mkidr ~/try-cb   
+      git clone https://github.com/ToddGreenstein/try-cb-nodejs.git ~/try-cb   
+      cd ~/try-cb   
+      npm install   
+      node app.js   
 
  - [4] Open a new terminal and run: curl -v -X POST http://127.0.0.1:3000/api/status/provisionCB 
 
