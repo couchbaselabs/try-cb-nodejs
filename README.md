@@ -6,7 +6,7 @@ A sample application and dataset for getting started with Couchbase 4.0.  The ap
 ## Installation and Configuration
  - [1] Install a Couchbase Server, with integrated query service, and start the server.   There is no need to manually configure the server through the admin UI, steps 3 and 4 (below) will **automatically** provision couchbase and the application.
  - [2] Install Node.js
- - [3] Make a directory, Clone this Repo, install dependencies, start application.  From a terminal:
+ - [3] Make a directory, clone this repo, install dependencies, start the application.  From a terminal:
         mkidr ~/try-cb   
         git clone https://github.com/ToddGreenstein/try-cb-nodejs.git ~/try-cb   
         cd ~/try-cb   
