@@ -4,7 +4,7 @@ try-cb-nodejs
 A sample application and dataset for getting started with Couchbase 4.0.  The application runs a single page UI for demonstrating query capabilities.   The application uses Couchbase Server +  Node.js + Express + Angular and boostrap.   The application is a flight planner that allows the user to search for and select a flight route (including return flight) based on airports and dates. Airport selection is done dynamically using an angular typeahead bound to cb server query.   Date selection uses date time pickers and then searches for applicable air flight routes from a previously populated database.  
 
 ## Installation and Configuration
- - [1] Install a Couchbase Server, with integrated query service, and start the server.   There is no need to manually configure the server through the admin UI, the rest of this script will **automatically** provision couchbase and the application.  
+ - [1] Install a Couchbase Server, with integrated query service, and start the server.   There is no need to manually configure the server through the admin UI, the rest of this script will **automatically** provision couchbase and the application.
  - [2] Install Node.js
  - [3] Make a directory, Clone this Repo, install dependencies, start application.  From a terminal:
  
@@ -14,7 +14,7 @@ A sample application and dataset for getting started with Couchbase 4.0.  The ap
         npm install   
         node app.js   
 
- - [4] Open a new terminal and run: curl -v -X POST http://127.0.0.1:3000/api/status/provisionCB 
+ - [4] Open a new terminal and run: curl -v -X POST http://127.0.0.1:3000/api/status/provisionCB
  - [5] Open a browser and load the url http://localhost:3000
 
 ## REST API DOCUMENTATION
