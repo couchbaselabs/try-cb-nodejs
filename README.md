@@ -15,6 +15,7 @@ A sample application and dataset for getting started with Couchbase 4.0.  The ap
         node app.js   
 
  - [4] Open a new terminal and run: curl -v -X POST http://127.0.0.1:3000/api/status/provisionCB 
+ - [5] Open a browser and load the url http://localhost:3000
 
 ## REST API DOCUMENTATION
 #### GET /api/airport/findAll?search=<_search string_> [**RETURNS: {"airportname":"<_airport name_>"} for typeahead airports passed in the query string in the parameter "search"**] 	
