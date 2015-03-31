@@ -1,27 +1,20 @@
 try-cb-nodejs
 ===============
 
-A sample application and dataset for getting started with Couchbase query.  The application runs a single page UI for demonstrating query capabilities.   The application uses Couchbase Server +  Node.js + Express + Angular.   The application allows the user to dynamically select airports by using an angular typeahead bound to cb server query, and then to search for applicable air flight routes from a previously populated database.  
+A sample application and dataset for getting started with Couchbase 4.0.  The application runs a single page UI for demonstrating query capabilities.   The application uses Couchbase Server +  Node.js + Express + Angular and boostrap.   The application is a flight planner that allows the user to search for and select a flight route (including return flight) based on airports and dates. Airport selection is done dynamically using an angular typeahead bound to cb server query.   Date selection uses date time pickers and then searches for applicable air flight routes from a previously populated database.  
 
-## Installation
- - [1] Install a Couchbase Server, with integrated query service
- - [2] Create a default bucket
- - [3] Install Node.js
- - [4] Clone this repository
- - [5] Under try-cb/model/db.js change the ip to match that of the Couchbase Server from step 1 and step 2.   Change in on line 6 and line 85 (two places)
- - [6] From the try-cb directory, run "npm install"
- - [7] Run, "node app.js"
- - [8] Configure, per steps below in "Configuration" 
- - [9] From a browser, connect to http://localhost:3000/index.html
- 
-## Configuration - run only once
-The steps below assume the application is running locally from the server curl will be run from.  If not, change the IP in the command string as needed.  
-
- - [1] This step resets the bucket, from a command line run and wait for the response: curl -v -X POST http://127.0.0.1:3000/api/status/reset   
- - [2] This step loads the bucket with airport data, from a command line run and wait for the response:  curl -v -X POST http://127.0.0.1:3000/api/raw/load/airports
- - [3] This step loads the bucket with route data, from a command line run and wait for the response:  curl -v -X POST http://127.0.0.1:3000/api/raw/load/routes
- - [4] This step loads the bucket with airline data, from a command line run and wait for the response: curl -v -X POST http://127.0.0.1:3000/api/raw/load/airlines
- - [5] This step creates the indexes for CB Query to utilize, from a command line run and wait for the response:  curl -v -X POST http://127.0.0.1:3000/api/raw/index
+## Installation and Configuration
+The steps below assume you are running a standalone couchbase instance running kv, indexing, and query services on the same server where the node application will also be running.  The config.json file in the root of this application can be edited to handle more complex topologies such as running couchbase server inside a vm.   
+ - [1] Install a Couchbase Server, with integrated query service, and start the server.   There is no need to manually configure the server through the admin UI, steps 3 and 4 (below) will **automatically** provision couchbase and the application.
+ - [2] Install Node.js
+ - [3] Make a directory, clone this repo, install dependencies, start the application.  From a terminal:  
+        mkidr ~/try-cb   
+        git clone https://github.com/ToddGreenstein/try-cb-nodejs.git ~/try-cb   
+        cd ~/try-cb   
+        npm install   
+        node app.js   
+ - [4] Open a new terminal and run: curl -v -X POST http://127.0.0.1:3000/api/status/provisionCB
+ - [5] Open a browser and load the url http://localhost:3000
 
 ## REST API DOCUMENTATION
 #### GET /api/airport/findAll?search=<_search string_> [**RETURNS: {"airportname":"<_airport name_>"} for typeahead airports passed in the query string in the parameter "search"**] 	
@@ -32,9 +25,7 @@ The steps below assume the application is running locally from the server curl w
 --Populates the available flights panel on successful query.  
 --Queries for available flight route by FAA codes, and joins against airline information to provide airline name.  
 
-#### POST /api/raw/load/:type [**RETURNS: {JSON OBJECT} indicating complete**]
---Loads the raw json formatted air travel documents from the file in try-cb/model/raw/rawJsonAir.js
---Loads based on <_type_> airports,routes,airlines.
-
-#### POST /api/raw/index [**RETURNS: {JSON OBJECT} indicating complete**]
---Builds indexes needed for CB Query 
+#### POST /api/status/provisionCB [**RETURNS: {JSON OBJECT} indicating complete**]
+--Loads the dataset dynamically based on options in the "config.json" file.   
+--If dataset="repo", the application will build a sample bucket called "travel-sample" by loading raw json formatted air travel documents from the file in try-cb/model/raw/rawJsonAir.js and dynamically build scheduling information.  This is useful for learning how to programitically build a bucket, perform ingestions of data and how to become familiar with the CB SDK API.  
+--If dataset="embedded", the application load the above information from the included sample bucket within couchbase known as "travel-sample"
