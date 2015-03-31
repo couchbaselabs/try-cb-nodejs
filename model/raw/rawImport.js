@@ -163,7 +163,7 @@ function isAvailable(done){
                 if(err){
                     return;
                 }
-                if(body && !available){
+                if(body && body.indexOf("Requested")==-1 && !available){
                     available=true;
                     if(JSON.parse(body).op.samplesCount=='60'){
                         clearInterval(timerAvailable);

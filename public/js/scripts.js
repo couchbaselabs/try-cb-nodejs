@@ -7,7 +7,7 @@ testapp.controller('flightController',function($scope,$http){
     $scope.rowCollectionLeave=[];
     $scope.rowCollectionRet=[];
     $scope.findAirports=function(val){
-        return $http.get("http://127.0.0.1:3000/api/airport/findAll",{
+        return $http.get("/api/airport/findAll",{
             params:{search:val}
         }).then(function(response){
             return response.data;
@@ -17,7 +17,7 @@ testapp.controller('flightController',function($scope,$http){
         $scope.empty = true;
         $scope.rowCollectionLeave = [];
         $scope.rowCollectionRet = [];
-        $http.get("http://127.0.0.1:3000/api/flightPath/findAll", {
+        $http.get("/api/flightPath/findAll", {
             params: {from: this.fromName, to: this.toName, leave: this.leave}
         }).then(function (response) {
             if (response.data.length > 0) {
@@ -28,7 +28,7 @@ testapp.controller('flightController',function($scope,$http){
             }
         });
         if (this.ret) {
-            $http.get("http://127.0.0.1:3000/api/flightPath/findAll", {
+            $http.get("/api/flightPath/findAll", {
                 params: {from: this.toName, to: this.fromName, leave: this.ret}
             }).then(function (responseRet) {
                 if (responseRet.data.length > 0) {
