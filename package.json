@@ -3,6 +3,10 @@
   "version": "0.0.2",
   "description": "Sample Application for Couchbase, Node.js, Angular, and Express",
   "homepage": "http://www.couchbase.com",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/ToddGreenstein/try-cb-nodejs.git"
+  },
   "license": "Apache2",
   "author": {
     "name": "Todd Greenstein",
