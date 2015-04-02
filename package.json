@@ -1,11 +1,23 @@
 {
-  "name": "try",
+  "name": "try-cb",
   "version": "0.0.2",
-  "private": true,
+  "description": "Sample Application for Couchbase, Node.js, Angular, and Express",
+  "homepage": "www.couchbase.com",
+  "license": "Apache2",
+  "author": {
+    "name": "Todd Greenstein",
+    "email": "todd@couchbase.com"
+  },
   "dependencies": {
     "express": "*",
-    "couchbase":"*",
-    "body-parser":"*",
-    "request":"*"
-  }
+    "couchbase": "*",
+    "body-parser": "*",
+    "request": "*"
+  },
+  "contributors": [
+    {
+      "name": "Todd Greenstein",
+      "email": "todd@couchbase.com"
+    }
+  ]
 }

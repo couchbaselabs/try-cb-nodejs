@@ -13,7 +13,7 @@
   },
   "application":{
     "httpPort":3000,
-    "dataSource":"repo",
+    "dataSource":"embedded",
     "wait":30000
   }
 }

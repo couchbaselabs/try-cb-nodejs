@@ -23,7 +23,7 @@ module.exports = function (app) {
         next();
     });
 
-    //// ▶▶ airports ◀◀ ////w
+    //// ▶▶ airports ◀◀ ////
     app.get('/api/airport/findAll',function(req,res) {
         if (req.query.search) {
             airport.findAll(req.query.search, function (err, done) {
