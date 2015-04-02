@@ -2,7 +2,7 @@
   "name": "try-cb",
   "version": "0.0.2",
   "description": "Sample Application for Couchbase, Node.js, Angular, and Express",
-  "homepage": "www.couchbase.com",
+  "homepage": "http://www.couchbase.com",
   "license": "Apache2",
   "author": {
     "name": "Todd Greenstein",
