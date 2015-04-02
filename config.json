@@ -14,6 +14,6 @@
   "application":{
     "httpPort":3000,
     "dataSource":"embedded",
-    "wait":30000
+    "wait":20000
   }
 }
