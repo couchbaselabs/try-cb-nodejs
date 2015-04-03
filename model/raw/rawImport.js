@@ -2,7 +2,7 @@
 
 var threshold=100;
 var testInterval=5;
-var checkInterval=250;
+var checkInterval=1000;
 var currentCount=0;
 var itemCount=0;
 var active=false;
@@ -58,12 +58,14 @@ function buidIndexes(done){
         db.query(sql,function(err,res){
             if(err){
                 done({'err':"can't create index "+indexesCB[i]+ err},null);
+                return;
             }
             if(res){
                 cbCount--;
                 if(cbCount==0){
                     console.log({'indexes':'built'});
                     done(null,{'indexes':'built'});
+                    return;
                 }
             }
         });
@@ -154,24 +156,14 @@ function isActive(cutOff,done) {
  */
 function isAvailable(done){
     timerAvailable = setInterval(function () {
-            request.get({
-                            url:"http://" + config.couchbase.endPoint + "/pools/default/buckets/" + config.couchbase.bucket + "/stats",auth: {
-                    'user': config.couchbase.user,
-                    'pass': config.couchbase.password,
-                    'sendImmediately': true
-                }},function (err, response, body) {
-                if(err){
-                    return;
-                }
-                if(body && body.indexOf("Requested")==-1 && !available){
-                    available=true;
-                    if(JSON.parse(body).op.samplesCount=='60'){
-                        clearInterval(timerAvailable);
-                        done(true);
-                        return;
-                    }
-                }
-            });
+        db.init(function(initialized){
+            if(initialized && !available){
+                available=true;
+                clearInterval(timerAvailable);
+                done(true);
+                return;
+            }
+        });
     }, checkInterval);
 }
 
@@ -418,10 +410,12 @@ function provision(done) {
                                             return;
                                         }
                                         if(bucket){
-                                           isAvailable(function(ready){
+                                            available=false;
+                                            isAvailable(function(ready){
                                                if(ready){
                                                    console.log({'bucket':'built'});
                                                    done(null,{'bucket':'built'});
+                                                   return;
                                                }
                                            });
                                         }
@@ -467,6 +461,7 @@ function loadData(done){
                                 if(indexed){
                                             console.log({'bucket':config.couchbase.bucket +' loaded'});
                                             done(null,{'bucket':'loaded'});
+                                    return;
                                 }
                             });
                         }
@@ -475,12 +470,6 @@ function loadData(done){
             });
         }
     });
-}
-function flow (wait, done){
-    console.log({"waiting":parseInt(wait)/1000+ ' seconds for bucket to finish provision'});
-    setTimeout(function(){
-        done(true);
-    },wait);
 }
 
 
@@ -494,47 +483,31 @@ function provisionCB(done){
             done(err,null);
             return;
         }
-        if(cluster){
-            db.init(function(ready){
-                if(err){
-                    done(err,null);
-                    return;
-                }
-                if(ready){
-                    if(config.application.dataSource=="repo") {
-                        loadData(function (err, loaded) {
-                            if (err) {
-                                done(err, null);
-                                return;
-                            }
-                            if (loaded) {
-                                done(null, {"environment": "built"});
-                                return;
-                            }
-                        });
+        if(cluster) {
+            if (config.application.dataSource == "repo") {
+                loadData(function (err, loaded) {
+                    if (err) {
+                        done(err, null);
+                        return;
                     }
-                    if(config.application.dataSource=="embedded") {
-                        flow(config.application.wait,function(waited){
-                            if(waited){
-                                db.init(function(waitedAgain) {
-                                    if (waitedAgain) {
-                                        buidIndexes(function(err,indexed){
-                                            if(err){
-                                                done(err,null);
-                                                return;
-                                            }
-                                            if(indexed){
-                                                done(null, {"environment": "built"});
-                                                return;
-                                            }
-                                        });
-                                    }
-                                });
-                            }
-                        });
+                    if (loaded) {
+                        done(null, {"environment": "built"});
+                        return;
                     }
-                }
-            });
+                });
+            }
+            if (config.application.dataSource == "embedded") {
+                buidIndexes(function (err, indexed) {
+                    if (err) {
+                        done(err, null);
+                        return;
+                    }
+                    if (indexed) {
+                        done(null, {"environment": "built"});
+                        return;
+                    }
+                });
+            }
         }
     });
 }

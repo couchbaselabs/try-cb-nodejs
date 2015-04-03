@@ -18,7 +18,8 @@ var request=require('request');
 function init(done){
     console.log({init:"check"});
     request.get({
-                    url:"http://" + config.couchbase.endPoint + "/pools/default/b/" + config.couchbase.bucket,auth: {
+                    url:"http://" + config.couchbase.n1qlService + "/query?statement=SELECT+name+FROM+system%3Akeyspaces",
+                    auth: {
             'user': config.couchbase.user,
             'pass': config.couchbase.password,
             'sendImmediately': true
@@ -32,9 +33,18 @@ function init(done){
                 myBucket = myCluster.openBucket(bucket);
                 db=myBucket;
                 enableN1QL(function(){});
-                console.log({init:"ready"+ response.statusCode});
-                done(true);
-                return;
+                query("CREATE INDEX temp ON `"+config.couchbase.bucket+"`(non) USING VIEW",function(err,res){
+                    if(err){
+                        done(false);
+                        return;
+                    }
+                    if(res){
+                        query("DROP INDEX `"+config.couchbase.bucket+"`.temp",function(){});
+                        console.log({init:"ready "+ response.statusCode});
+                        done(true);
+                        return;
+                    }
+                });
         }
     });
 }
@@ -50,7 +60,7 @@ init(function(){});
  *
  * @param done
  */
-module.exports.reset=function(done){
+function reset(done){
     var mgr=myBucket.manager(config.couchbase.user,config.couchbase.password);
     mgr.flush(function(err,complete){
         if(err){
@@ -68,7 +78,7 @@ module.exports.reset=function(done){
  * @param val
  * @param done
  */
-module.exports.upsert = function (key, val, done) {
+function upsert(key, val, done) {
     db.upsert(key, val, function (err, res) {
         if (err) {
             console.log("DB.UPSERT:",key,":", err);
@@ -84,7 +94,7 @@ module.exports.upsert = function (key, val, done) {
  * @param key
  * @param done
  */
-module.exports.read = function (key, done) {
+function read(key, done) {
     db.get(key, function (err, result) {
         if (err) {
             console.log("DB.READ:", err);
@@ -100,7 +110,7 @@ module.exports.read = function (key, done) {
  * @param key
  * @param done
  */
-module.exports.delete = function (key, done) {
+function docDelete(key, done) {
     db.delete(key, function (err, result) {
         if (err) {
             console.log("DB.DELETE:", err);
@@ -121,7 +131,7 @@ module.exports.delete = function (key, done) {
  * @param sql
  * @param done
  */
-module.exports.query=function(sql,done){
+function query(sql,done){
     var N1qlQuery = couchbase.N1qlQuery;
     if(config.couchbase.showQuery){
         console.log("QUERY:",sql);
@@ -131,8 +141,10 @@ module.exports.query=function(sql,done){
         if (err) {
             console.log("ERR:",err);
             done(err,null);
+            return;
         }
         done(null,result);
+        return;
     });
 }
 
@@ -140,7 +152,7 @@ module.exports.query=function(sql,done){
  *
  * @param done
  */
-module.exports.ops = function (done) {
+function ops(done) {
     http.get("http://" + endPoint + "/pools/default/buckets/" + bucket, function (result) {
         var data = "";
         result.setEncoding('utf8');
@@ -161,7 +173,12 @@ module.exports.ops = function (done) {
  */
 
 
-
 module.exports.endPoint=endPoint;
 module.exports.bucket=bucket;
 module.exports.init=init;
+module.exports.query=query;
+module.exports.reset=reset;
+module.exports.ops=ops;
+module.exports.delete=docDelete;
+module.exports.read=read;
+module.exports.upsert=upsert;
