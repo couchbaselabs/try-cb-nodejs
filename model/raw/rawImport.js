@@ -13,6 +13,7 @@ var timerAvailable;
 var config = require('./../../config');
 var request=require('request');
 var db=require('./../db');
+var tryCount=0;
 
 /**
  *
@@ -49,26 +50,68 @@ function ingest(category, done) {
  *
  * @param done
  */
-function buidIndexes(done){
-    var indexesCB=['faa','icao','city','airportname','type','sourceairport'];
-    db.query('CREATE PRIMARY INDEX on `' + config.couchbase.bucket + '` USING '+ config.couchbase.indexType,function(err,res){});
-    var cbCount=indexesCB.length-1;
-    for(var i=0; i<indexesCB.length; i++){
-        var sql = ('CREATE INDEX def_' + indexesCB[i]+ ' ON `' + config.couchbase.bucket + '`('+indexesCB[i]+') USING ' + config.couchbase.indexType);
-        db.query(sql,function(err,res){
-            if(err){
-                done({'err':"can't create index "+indexesCB[i]+ err},null);
-                return;
-            }
-            if(res){
-                cbCount--;
-                if(cbCount==0){
-                    console.log({'indexes':'built'});
-                    done(null,{'indexes':'built'});
+function buidIndexes(done) {
+    if (config.couchbase.indexType == 'view') {
+        var indexesCB = ['faa', 'icao', 'city', 'airportname', 'type', 'sourceairport'];
+        db.query('CREATE PRIMARY INDEX on `' + config.couchbase.bucket + '` USING ' + config.couchbase.indexType,
+                 function (err, res) {
+                 });
+        var cbCount = indexesCB.length - 1;
+        for (var i = 0; i < indexesCB.length; i++) {
+            var sql = ('CREATE INDEX def_' + indexesCB[i] + ' ON `' + config.couchbase.bucket + '`(' + indexesCB[i] + ') USING ' + config.couchbase.indexType);
+            db.query(sql, function (err, res) {
+                if (err) {
+                    done({'err': "can't create index " + indexesCB[i] + err}, null);
                     return;
                 }
-            }
-        });
+                if (res) {
+                    cbCount--;
+                    if (cbCount == 0) {
+                        console.log({'indexes': 'built'});
+                        done(null, {'indexes': 'built'});
+                        return;
+                    }
+                }
+            });
+        }
+    }
+    if (config.couchbase.indexType == 'gsi') {
+        var buildStr = 'BUILD INDEX ON `' + config.couchbase.bucket + '`(def_primary';
+        var indexesCB = ['faa', 'icao', 'city', 'airportname', 'type', 'sourceairport'];
+        db.query('CREATE PRIMARY INDEX def_primary on `' + config.couchbase.bucket + '` USING ' + config.couchbase.indexType +
+                 ' WITH{"defer_build":true}',
+                 function (err, res) {
+                 });
+        var cbCount = indexesCB.length - 1;
+        for (var i = 0; i < indexesCB.length; i++) {
+            var sql = ('CREATE INDEX def_' + indexesCB[i] + ' ON `' + config.couchbase.bucket + '`(' + indexesCB[i] + ') USING ' +
+            config.couchbase.indexType + ' WITH{"defer_build":true}');
+            buildStr += (',def_' + indexesCB[i]);
+            db.query(sql, function (err, res) {
+                if (err) {
+                    done({'err': "can't create index " + indexesCB[i] + err}, null);
+                    return;
+                }
+                if (res) {
+                    cbCount--;
+                    if (cbCount == 0) {
+                        buildStr += ') USING GSI';
+                        setTimeout(function () {
+                            db.query(buildStr, function (err, indexBuilt) {
+                                if (err) {
+                                    done({'err': "can't build indexes " + err}, null);
+                                }
+                                if (indexBuilt) {
+                                    console.log({'indexes': 'built'});
+                                    done(null, {'indexes': 'built'});
+                                    return;
+                                }
+                            });
+                        }, config.application.wait);
+                    }
+                }
+            });
+        }
     }
 }
 
@@ -156,6 +199,7 @@ function isActive(cutOff,done) {
  */
 function isAvailable(done){
     timerAvailable = setInterval(function () {
+        console.log("CHECKING IF SERVICE READY:ERR MEANS SERVICE IS NOT READY YET!! ATTEMPT ",++tryCount);
         db.init(function(initialized){
             if(initialized && !available){
                 available=true;
@@ -330,7 +374,7 @@ function provisionBucket(done) {
                              replicaIndex:'0',
                              replicaNumber:'0',
                              evictionPolicy:'valueOnly',
-                             ramQuotaMB:'597',
+                             ramQuotaMB:'2500',
                              bucketType:'membase',
                              name:config.couchbase.bucket,
                              authType:'sasl',

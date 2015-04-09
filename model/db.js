@@ -33,13 +33,13 @@ function init(done){
                 myBucket = myCluster.openBucket(bucket);
                 db=myBucket;
                 enableN1QL(function(){});
-                query("CREATE INDEX temp ON `"+config.couchbase.bucket+"`(non) USING VIEW",function(err,res){
+                query("CREATE INDEX temp ON `"+config.couchbase.bucket+"`(non) USING GSI",function(err,res){
                     if(err){
                         done(false);
                         return;
                     }
                     if(res){
-                        query("DROP INDEX `"+config.couchbase.bucket+"`.temp",function(){});
+                        query("DROP INDEX `"+config.couchbase.bucket+"`.temp USING GSI",function(){});
                         console.log({init:"ready "+ response.statusCode});
                         done(true);
                         return;

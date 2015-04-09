@@ -8,12 +8,12 @@
     "password":"password",
     "dataPath":"",
     "indexPath":"",
-    "indexType":"view",
+    "indexType":"gsi",
     "showQuery":true
   },
   "application":{
     "httpPort":3000,
     "dataSource":"embedded",
-    "wait":1000
+    "wait":3000
   }
 }
