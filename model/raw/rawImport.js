@@ -2,7 +2,6 @@
 
 var threshold=100;
 var testInterval=5;
-var checkInterval=1000;
 var currentCount=0;
 var itemCount=0;
 var active=false;
@@ -10,10 +9,12 @@ var available=false;
 var timerBatch;
 var timerActive;
 var timerAvailable;
+var timerOnline
 var config = require('./../../config');
 var request=require('request');
 var db=require('./../db');
 var tryCount=0;
+var checkInterval=config.application.checkInterval;
 
 /**
  *
@@ -102,9 +103,14 @@ function buidIndexes(done) {
                                     done({'err': "can't build indexes " + err}, null);
                                 }
                                 if (indexBuilt) {
-                                    console.log({'indexes': 'built'});
-                                    done(null, {'indexes': 'built'});
-                                    return;
+                                    isOnline(function(online){
+                                        if(online){
+                                            console.log({'indexes': 'built'});
+                                            done(null, {'indexes': 'built'});
+                                            return;
+                                        }
+
+                                    });
                                 }
                             });
                         }, config.application.wait);
@@ -198,14 +204,38 @@ function isActive(cutOff,done) {
  * @param done
  */
 function isAvailable(done){
+    tryCount=0;
     timerAvailable = setInterval(function () {
-        console.log("CHECKING IF SERVICE READY:ERR MEANS SERVICE IS NOT READY YET!! ATTEMPT ",++tryCount);
+        console.log("CHECKING IF INDEX SERVICE READY:ERR MEANS SERVICE IS NOT READY YET!! ATTEMPT ",++tryCount);
         db.init(function(initialized){
             if(initialized && !available){
                 available=true;
                 clearInterval(timerAvailable);
                 done(true);
                 return;
+            }
+        });
+    }, checkInterval);
+}
+
+/**
+ *
+ * @param done
+ */
+function isOnline(done){
+    tryCount=0;
+    timerOnline = setInterval(function () {
+        console.log("CHECKING IF 7 INDEXES ARE ONLINE:ATTEMPT ",++tryCount);
+        db.query('SELECT COUNT(*) FROM system:indexes WHERE state="online"', function(err,onlineCount){
+            if(onlineCount){
+                console.log("INDEXES ONLINE:",onlineCount);
+                if(typeof onlineCount[0]!== "undefined") {
+                    if (onlineCount[0].$1 == 7) {
+                        clearInterval(timerOnline);
+                        done(true);
+                        return;
+                    }
+                }
             }
         });
     }, checkInterval);
@@ -409,7 +439,6 @@ function provisionBucket(done) {
                          }
                      }, function (err, httpResponse, body) {
             if(err){
-                console.log("DEBUG:",err);
                 done(err,null);
                 return;
             }
