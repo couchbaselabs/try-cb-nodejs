@@ -15,36 +15,71 @@ var request=require('request');
 /**
  * 
  */
-function init(done){
-    console.log({init:"check"});
+function init(done) {
+    console.log({init: "check"});
     request.get({
-                    url:"http://" + config.couchbase.n1qlService + "/query?statement=SELECT+name+FROM+system%3Akeyspaces",
+                    url: "http://" + config.couchbase.n1qlService + "/query?statement=SELECT+name+FROM+system%3Akeyspaces",
                     auth: {
-            'user': config.couchbase.user,
-            'pass': config.couchbase.password,
-            'sendImmediately': true
-        }},function (err, response, body) {
-        if(err){
-            console.log({init:"not ready "+err});
+                        'user': config.couchbase.user,
+                        'pass': config.couchbase.password,
+                        'sendImmediately': true
+                    }
+                }, function (err, response, body) {
+        if (err) {
+            console.log({init: "not ready"});
+            if (config.couchbase.showQuery) {
+                console.log("VERBOSE:", err);
+            }
             done(false);
             return;
         }
-        if(response.statusCode==200){
-                myBucket = myCluster.openBucket(bucket);
-                db=myBucket;
-                enableN1QL(function(){});
-                query("CREATE INDEX temp ON `"+config.couchbase.bucket+"`(non) USING GSI",function(err,res){
-                    if(err){
-                        done(false);
-                        return;
+        if (response.statusCode == 200) {
+            request.get({
+                            url: "http://" + endPoint + "/pools/default/buckets/" + bucket,
+                            auth: {
+                                'user': config.couchbase.user,
+                                'pass': config.couchbase.password,
+                                'sendImmediately': true
+                            }
+                        }, function (err, responseB, bodyB) {
+                if (err) {
+                    console.log({init: "not ready"});
+                    if (config.couchbase.showQuery) {
+                        console.log("VERBOSE:", err);
                     }
-                    if(res){
-                        query("DROP INDEX `"+config.couchbase.bucket+"`.temp USING GSI",function(){});
-                        console.log({init:"ready "+ response.statusCode});
-                        done(true);
-                        return;
+                    done(false);
+                    return;
+                }
+                if (parseInt(JSON.parse(bodyB).basicStats.itemCount) > 31620) {
+                    myBucket = myCluster.openBucket(bucket);
+                    db = myBucket;
+                    enableN1QL(function () {
+                    });
+                    query("CREATE INDEX temp ON `" + config.couchbase.bucket + "`(non) USING " + config.couchbase.indexType,
+                          function (err, res) {
+                              if (err) {
+                                  console.log({init: "not ready"})
+                                  done(false);
+                                  return;
+                              }
+                              if (res) {
+                                  query("DROP INDEX `" + config.couchbase.bucket + "`.temp USING " + config.couchbase.indexType,
+                                        function () {
+                                        });
+                                  console.log({init: "ready " + response.statusCode});
+                                  done(true);
+                                  return;
+                              }
+                          });
+                } else {
+                    console.log({init: "not ready"});
+                    if (config.couchbase.showQuery) {
+                        console.log("VERBOSE:ITEM COUNT", JSON.parse(bodyB).basicStats.itemCount);
                     }
-                });
+                    done(false);
+                    return;
+                }
+            });
         }
     });
 }
