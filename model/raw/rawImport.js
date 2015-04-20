@@ -9,7 +9,7 @@ var available=false;
 var timerBatch;
 var timerActive;
 var timerAvailable;
-var timerOnline
+var timerOnline;
 var config = require('./../../config');
 var request=require('request');
 var db=require('./../db');

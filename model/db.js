@@ -11,6 +11,7 @@ var myCluster = new couchbase.Cluster(endPoint);
 var db;
 var http=require('http');
 var request=require('request');
+var status="offline";  //offline,pending,online
 
 /**
  * 
@@ -64,11 +65,20 @@ function init(done) {
                               }
                               if (res) {
                                   query("DROP INDEX `" + config.couchbase.bucket + "`.temp USING " + config.couchbase.indexType,
-                                        function () {
+                                        function (err,dropped) {
+                                            if (err) {
+                                                console.log({init: "not ready"})
+                                                done(false);
+                                                return;
+                                            }
+                                            if(dropped && status!="online"){
+                                                status="online";
+                                                console.log({init: "ready"});
+                                                done(true);
+                                                return;
+
+                                            }
                                         });
-                                  console.log({init: "ready " + response.statusCode});
-                                  done(true);
-                                  return;
                               }
                           });
                 } else {
