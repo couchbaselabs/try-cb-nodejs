@@ -80,7 +80,7 @@ testapp.controller('flightController',function($scope,$http){
     }
 
     //// ▶▶ Jquery inside Angular ◀◀ ////
-    $('.input-daterange').datepicker({"todayHighlight": true, "autoclose":true});
+    $('.input-daterange').datepicker({"todayHighlight": true, "autoclose":true,"startDate":"+0d"});
 
     $("input.switch").bootstrapSwitch({
                                           onText: '⇄',
