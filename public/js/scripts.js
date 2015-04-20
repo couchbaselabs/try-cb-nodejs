@@ -51,6 +51,13 @@ testapp.controller('flightController',function($scope,$http){
     $scope.selectRow=function(row){
         $scope.rowCollectionLeave=[];
         $scope.rowCollectionLeave.push(row);
+        var tempRet=[];
+        for (var k=0;k<$scope.rowCollectionRet.length;k++){
+            if($scope.rowCollectionRet[k].name == row.name){
+                tempRet.push($scope.rowCollectionRet[k]);
+            }
+        }
+        $scope.rowCollectionRet=tempRet;
     }
 
     $scope.removeRowRet = function removeRowRet(row) {
@@ -63,14 +70,17 @@ testapp.controller('flightController',function($scope,$http){
     $scope.selectRowRet=function(row){
         $scope.rowCollectionRet=[];
         $scope.rowCollectionRet.push(row);
-    }
-
-    $scope.dbg=function(){
-        alert("DEBUG:"+ this.fromName +"::"+ this.toName +"::"+ this.leave +"::"+ this.ret);
+        var tempLeave=[];
+        for (var j=0;j<$scope.rowCollectionLeave.length;j++){
+            if($scope.rowCollectionLeave[j].name == row.name){
+                tempLeave.push($scope.rowCollectionLeave[j]);
+            }
+        }
+        $scope.rowCollectionLeave=tempLeave;
     }
 
     //// ▶▶ Jquery inside Angular ◀◀ ////
-    $('.input-daterange').datepicker({"todayHighlight": true, "autoclose":true});
+    $('.input-daterange').datepicker({"todayHighlight": true, "autoclose":true,"startDate":"+0d"});
 
     $("input.switch").bootstrapSwitch({
                                           onText: '⇄',
