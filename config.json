@@ -9,7 +9,9 @@
     "dataPath":"",
     "indexPath":"",
     "indexType":"gsi",
-    "showQuery":true
+    "showQuery":true,
+    "indexMemQuota":2048,
+    "dataMemQuota":1024
   },
   "application":{
     "httpPort":3000,

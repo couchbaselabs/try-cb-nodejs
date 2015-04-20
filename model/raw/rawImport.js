@@ -369,6 +369,24 @@ function provisionServices(done) {
     });
 }
 
+function provisionMemory(done) {
+    request.post({
+                     url: 'http://'+ config.couchbase.endPoint+'/pools/default',
+                     form: {indexMemoryQuota:config.couchbase.indexMemQuota,
+                         memoryQuota:config.couchbase.dataMemQuota
+                     }
+                 }, function (err, httpResponse, body) {
+        if(err){
+            done(err,null);
+            return;
+        }
+        console.log({'provisionServices':httpResponse.statusCode});
+        done(null,httpResponse.statusCode);
+
+    });
+}
+
+
 /**
  *
  * @param done
@@ -404,7 +422,7 @@ function provisionBucket(done) {
                              replicaIndex:'0',
                              replicaNumber:'0',
                              evictionPolicy:'valueOnly',
-                             ramQuotaMB:'2500',
+                             ramQuotaMB:'1024',
                              bucketType:'membase',
                              name:config.couchbase.bucket,
                              authType:'sasl',
@@ -454,43 +472,51 @@ function provisionBucket(done) {
  */
 function provision(done) {
     provisionInit(function (err, init) {
-        if(err){
-            done(err,null);
+        if (err) {
+            done(err, null);
             return;
         }
         if (init) {
             provisionRename(function (err, rename) {
-                if(err){
-                    done(err,null);
+                if (err) {
+                    done(err, null);
                     return;
                 }
                 if (rename) {
                     provisionServices(function (err, services) {
-                        if(err){
-                            done(err,null);
+                        if (err) {
+                            done(err, null);
                             return;
                         }
                         if (services) {
-                            provisionAdmin(function (err, admin) {
-                                if(err){
-                                    done(err,null);
+                            provisionMemory(function (err, mem) {
+                                if (err) {
+                                    done(err, null);
                                     return;
                                 }
-                                if (admin) {
-                                    provisionBucket(function (err, bucket) {
-                                        if(err){
-                                            done(err,null);
+                                if (mem) {
+                                    provisionAdmin(function (err, admin) {
+                                        if (err) {
+                                            done(err, null);
                                             return;
                                         }
-                                        if(bucket){
-                                            available=false;
-                                            isAvailable(function(ready){
-                                               if(ready){
-                                                   console.log({'bucket':'built'});
-                                                   done(null,{'bucket':'built'});
-                                                   return;
-                                               }
-                                           });
+                                        if (admin) {
+                                            provisionBucket(function (err, bucket) {
+                                                if (err) {
+                                                    done(err, null);
+                                                    return;
+                                                }
+                                                if (bucket) {
+                                                    available = false;
+                                                    isAvailable(function (ready) {
+                                                        if (ready) {
+                                                            console.log({'bucket': 'built'});
+                                                            done(null, {'bucket': 'built'});
+                                                            return;
+                                                        }
+                                                    });
+                                                }
+                                            });
                                         }
                                     });
                                 }

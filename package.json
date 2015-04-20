@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "express": "*",
-    "couchbase": "*",
+    "couchbase": "git+https://github.com/brett19/couchnode.git",
     "body-parser": "*",
     "request": "*"
   },
