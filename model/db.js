@@ -64,21 +64,37 @@ function init(done) {
                                   return;
                               }
                               if (res) {
-                                  query("DROP INDEX `" + config.couchbase.bucket + "`.temp USING " + config.couchbase.indexType,
-                                        function (err,dropped) {
+                                  query('SELECT COUNT(*) FROM system:indexes WHERE state="online"',
+                                        function (err, onlineCount) {
                                             if (err) {
                                                 console.log({init: "not ready"})
                                                 done(false);
                                                 return;
                                             }
-                                            if(dropped && status!="online"){
-                                                status="online";
-                                                console.log({init: "ready"});
-                                                done(true);
-                                                return;
+                                            if (onlineCount) {
+                                                console.log("INDEXES ONLINE:", onlineCount);
+                                                if (typeof onlineCount[0] !== "undefined") {
+                                                    if (onlineCount[0].$1 == 1) {
+                                                        query("DROP INDEX `" + config.couchbase.bucket + "`.temp USING " + config.couchbase.indexType,
+                                                              function (err, dropped) {
+                                                                  if (err) {
+                                                                      console.log({init: "not ready"})
+                                                                      done(false);
+                                                                      return;
+                                                                  }
+                                                                  if (dropped && status != "online") {
+                                                                      status = "online";
+                                                                      console.log({init: "ready"});
+                                                                      done(true);
+                                                                      return;
 
+                                                                  }
+                                                              });
+                                                    }
+                                                }
                                             }
                                         });
+
                               }
                           });
                 } else {
