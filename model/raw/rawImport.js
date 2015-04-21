@@ -6,6 +6,7 @@ var currentCount=0;
 var itemCount=0;
 var active=false;
 var available=false;
+var online=false;
 var timerBatch;
 var timerActive;
 var timerAvailable;
@@ -206,7 +207,7 @@ function isActive(cutOff,done) {
 function isAvailable(done){
     tryCount=0;
     timerAvailable = setInterval(function () {
-        console.log("CHECKING IF INDEX SERVICE READY:ERR MEANS SERVICE IS NOT READY YET!! ATTEMPT ",++tryCount);
+        console.log("CHECKING IF INDEX SERVICE READY:ATTEMPT ",++tryCount);
         db.init(function(initialized){
             if(initialized && !available){
                 available=true;
@@ -230,7 +231,8 @@ function isOnline(done){
             if(onlineCount){
                 console.log("INDEXES ONLINE:",onlineCount);
                 if(typeof onlineCount[0]!== "undefined") {
-                    if (onlineCount[0].$1 == 7) {
+                    if (onlineCount[0].$1 == 7&&!online) {
+                        online=true;
                         clearInterval(timerOnline);
                         done(true);
                         return;
