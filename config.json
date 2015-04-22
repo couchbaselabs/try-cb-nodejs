@@ -17,6 +17,7 @@
     "httpPort":3000,
     "dataSource":"embedded",
     "wait":3000,
-    "checkInterval":1000
+    "checkInterval":1000,
+    "verbose":false
   }
 }

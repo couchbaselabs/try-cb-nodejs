@@ -28,7 +28,7 @@ function init(done) {
                 }, function (err, response, body) {
         if (err) {
             console.log({init: "not ready"});
-            if (config.couchbase.showQuery) {
+            if (config.application.verbose) {
                 console.log("VERBOSE:", err);
             }
             done(false);
@@ -45,7 +45,7 @@ function init(done) {
                         }, function (err, responseB, bodyB) {
                 if (err) {
                     console.log({init: "not ready"});
-                    if (config.couchbase.showQuery) {
+                    if (config.application.verbose) {
                         console.log("VERBOSE:", err);
                     }
                     done(false);
@@ -87,19 +87,17 @@ function init(done) {
                                                                       console.log({init: "ready"});
                                                                       done(true);
                                                                       return;
-
                                                                   }
                                                               });
                                                     }
                                                 }
                                             }
                                         });
-
                               }
                           });
                 } else {
                     console.log({init: "not ready"});
-                    if (config.couchbase.showQuery) {
+                    if (config.application.verbose) {
                         console.log("VERBOSE:ITEM COUNT", JSON.parse(bodyB).basicStats.itemCount);
                     }
                     done(false);
