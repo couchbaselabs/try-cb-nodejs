@@ -6,7 +6,8 @@ var db = require('../model/db');
 var airport=require('../model/airport');
 var flightPath=require('../model/flightPath');
 var rawImport=require('../model/raw/rawImport');
-//db.enableN1QL(function(err,done){});
+var auth=require('../model/auth.js');
+var user=require('../model/user.js');
 
 //// ▶▶ application/json parser ◀◀ ////
 var jsonParser = bodyParser.json();
@@ -71,12 +72,14 @@ module.exports = function (app) {
             }
             res.status=202;
             res.send(done);
+            return;
         })
     });
 
-    //// ▶▶ debug endpoints -- Not Used For Production ◀◀ ////
-    app.post('/api/raw/load/:type', function(req,res) {
-        rawImport.ingest(req.params.type,function(err,done){
+    //// ▶▶ create login ◀◀ ////
+    app.post('/api/user/login',jsonParser,function(req,res){
+        console.log("debug:",req.body.user,req.body.password);
+        auth.createLogin(req.body.user,req.body.password,function(err,done){
             if(err){
                 res.status=400;
                 res.send(err);
@@ -84,82 +87,23 @@ module.exports = function (app) {
             }
             res.status=202;
             res.send(done);
-        })
-    });
-
-    app.post('/api/raw/index', function(req,res) {
-        rawImport.buildIndexes(function(err,done){
-            if(err){
-                res.status=400;
-                res.send(err);
-                return;
-            }
-            res.status=202;
-            res.send(done);
-        })
-    });
-
-    app.get('/api/status/ops', function(req,res) {
-        db.ops(function(done){
-            res.status = 200;
-            res.send({'ops':done});
+            return;
         });
     });
 
-    app.get('/api/status/available',function(req,res){
-        rawImport.available(function(done){
-            res.status = 200;
-            res.send({'available':done});
+    //// ▶▶ login ◀◀ ////
+    app.get('/api/user/login',urlencodedParser,function(req,res){
+        auth.login(req.query.user,req.query.password,function(err,check){
+            if(err){
+                res.status=400;
+                res.send(err);
+                return;
+            }
+            if(check){
+                res.status=202;
+                res.send(done);
+                return;
+            }
         });
     });
-
-    app.post('/api/status/reset', function(req,res) {
-        db.reset(function(err,done){
-            if(err){
-                res.status=400;
-                res.send(err);
-                return;
-            }
-            res.status=202;
-            res.send(done);
-        })
-    });
-
-    app.post('/api/status/provision',function(req,res){
-        rawImport.provision(function(err,done){
-            if(err){
-                res.status=400;
-                res.send(err);
-                return;
-            }
-            res.status=202;
-            res.send(done);
-        })
-    });
-
-    app.post('/api/status/provisionBucket',function(req,res){
-        rawImport.provisionBucket(function(err,done){
-            if(err){
-                res.status=400;
-                res.send(err);
-                return;
-            }
-            res.status=202;
-            res.send(done);
-        })
-    });
-
-    app.post('/api/status/load',function(req,res){
-        rawImport.loadData(function(err,done){
-            if(err){
-                res.status=400;
-                res.send(err);
-                return;
-            }
-            res.status=202;
-            res.send(done);
-        })
-    });
-
-
 }

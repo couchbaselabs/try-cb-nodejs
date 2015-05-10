@@ -16,7 +16,9 @@
     "express": "*",
     "couchbase": "*",
     "body-parser": "*",
-    "request": "*"
+    "request": "*",
+    "jsonwebtoken":"*",
+    "ottoman":"git+https://github.com/couchbaselabs/node-ottoman.git#refactor"
   },
   "contributors": [
     {

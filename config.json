@@ -18,6 +18,7 @@
     "dataSource":"embedded",
     "wait":3000,
     "checkInterval":1000,
-    "verbose":false
+    "verbose":false,
+    "hashToken":"UNSECURE_SECRET_TOKEN"
   }
 }

@@ -7,7 +7,7 @@ var couchbase = require('couchbase');
 var endPoint = config.couchbase.endPoint;
 var bucket = config.couchbase.bucket;
 var myCluster = new couchbase.Cluster(endPoint);
-//var myBucket = myCluster.openBucket(bucket);
+var ODMBucket = myCluster.openBucket(bucket);
 var db;
 var http=require('http');
 var request=require('request');
@@ -231,7 +231,7 @@ function ops(done) {
  * @param done
  */
 
-
+module.exports.ODMBucket=ODMBucket;
 module.exports.endPoint=endPoint;
 module.exports.bucket=bucket;
 module.exports.init=init;
