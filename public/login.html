@@ -22,6 +22,7 @@
       <script src="js/ngCart.js"></script>
       <script src="js/angular-md5.min.js"></script>
       <script src="js/angular-cookies.min.js"></script>
+      <script src="js/angular-jwt.min.js"></script>
       <script src="js/scripts.js"></script>
     <style>
        body {padding-top: 40px;padding-bottom: 40px;background-color: #eee;}
@@ -30,7 +31,7 @@
   </head>
   <body ng-app="testApp" ng-controller="flightController">
     <div class="container">
-      <form role="form" ng-submit="login()" class="form-signin">
+      <form role="form" ng-submit="login()" class="form-signin" name="loginForm" novalidate>
         <h2 class="form-signin-heading">{{formData.h2}}</h2>
         <input type="text" placeholder="Please Enter Your Email Address" required name="username"
                ng-model="formData.username"
@@ -45,6 +46,7 @@
           </label>
         <button type="submit" class="btn btn-lg btn-primary btn-block">Sign in</button>
       </form>
+        <div class="alert alert-warning" role="alert" ng-show="formData.error">{{formData.error}}</div>
     </div>
   </body>
 </html>

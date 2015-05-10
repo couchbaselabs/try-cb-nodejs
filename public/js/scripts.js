@@ -1,7 +1,7 @@
 
 //// ▶▶ Angular ◀◀ ////
-var testapp = angular.module('testApp',['ui.bootstrap','ngCart','angular-md5','ngCookies']);
-testapp.controller('flightController',function($scope,$http,ngCart,md5,$cookies){
+var testapp = angular.module('testApp',['ui.bootstrap','ngCart','angular-md5','ngCookies','angular-jwt']);
+testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$cookieStore,jwtHelper){
     $scope.formData = {h2:"Please Take a Moment to Create an Account"};
     $scope.empty=true;
     $scope.cart=false;
@@ -9,24 +9,40 @@ testapp.controller('flightController',function($scope,$http,ngCart,md5,$cookies)
     $scope.rowCollectionLeave=[];
     $scope.rowCollectionRet=[];
     $scope.login = function(){
-        console.log("username:",this.formData.username," password:",md5.createHash(this.formData.password));
+        var curUser=this.formData.username;
         if(this.formData.h2.indexOf("Create")!=-1){
-            $http.post("/api/user/login",{user:this.formData.username,
+            $http.post("/api/user/login",{user:curUser,
                 password:md5.createHash(this.formData.password)})
                 .then(function(response){
-                                     console.log("debug:",response.data);
-                                     return response.data;
+                                     if(response.data.success){
+                                         $scope.formData.error=null;
+                                         $cookieStore.put('token',response.data.success);
+                                         $window.location.href="http://" + $window.location.host + "/index.html";
+                                     }
+                                      if(response.data.failure) {
+                                          $scope.formData.error = response.data.failure;
+                                      }
                                   });
         }else{
             $http.get("/api/user/login", {
                 params:{user:this.formData.username,
                     password:md5.createHash(this.formData.password)}})
                 .then(function(response){
-                                      console.log("debug:",response.data);
-                                     return response.data;
+                                      if(response.data.success){
+                                          $scope.formData.error=null;
+                                          $cookieStore.put('token',response.data.success);
+                                          $window.location.href="http://" + $window.location.host + "/index.html";
+                                      }
+                                      if(response.data.failure) {
+                                          $scope.formData.error = response.data.failure;
+                                      }
                                   });
             }
         }
+
+    $scope.getUser = function(){
+        return jwtHelper.decodeToken($cookieStore.get('token')).user;
+    }
     $scope.findAirports=function(val){
         return $http.get("/api/airport/findAll",{
             params:{search:val}
@@ -103,6 +119,7 @@ testapp.controller('flightController',function($scope,$http,ngCart,md5,$cookies)
         }
         $scope.rowCollectionLeave=tempLeave;
     }
+
 
     //// ▶▶ Jquery inside Angular ◀◀ ////
     $('.input-daterange').datepicker({"todayHighlight": true, "autoclose":true,"startDate":"+0d"});

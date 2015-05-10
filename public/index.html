@@ -18,6 +18,7 @@
     <script src="js/ngCart.js"></script>
     <script src="js/angular-md5.min.js"></script>
     <script src="js/angular-cookies.min.js"></script>
+    <script src="js/angular-jwt.min.js"></script>
     <script src="js/scripts.js"></script>
 </head>
 <body ng-app="testApp" ng-controller="flightController">
@@ -28,7 +29,7 @@
                 <div class="panel-heading">
                     <div class="container-fluid panel-container">
                         <div class="col-xs-6 text-left">
-                            <h3 class="panel-title">Find a Flight</h3>
+                            <h3 class="panel-title">Find a Flight || User: {{getUser()}}</h3>
                         </div>
                         <ngcart-summary></ngcart-summary>
                     </div>

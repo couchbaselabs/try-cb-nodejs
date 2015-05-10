@@ -3,7 +3,6 @@ var jwt = require('jsonwebtoken');
 var config = require('./../config');
 var User = require('./user.js');
 var jwt = require('jsonwebtoken');
-
 var sec=config.application.hashToken;
 
 module.exports.createLogin = function (newUser,newPass,done) {
@@ -61,7 +60,7 @@ module.exports.login=function(user,pass,done){
         }
         if(found.length===1){
             // User Found
-            if(pass!=found.password){
+            if(pass!=found[0].password){
                 // Bad Password
                 done(null,{"failure":"Bad Username or Password"});
                 return;
