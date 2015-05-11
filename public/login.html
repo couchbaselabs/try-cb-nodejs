@@ -35,9 +35,11 @@
         <h2 class="form-signin-heading">{{formData.h2}}</h2>
         <input type="text" placeholder="Please Enter Your Email Address" required name="username"
                ng-model="formData.username"
+               ng-change="formData.error=null"
                class="form-control"/>
           <input type="password" placeholder="Enter a password" required="" name="password"
                  ng-model="formData.password"
+                 ng-change="formData.error=null"
                  class="form-control"/>
           <label class="checkbox">
               <input type="checkbox" ng-checked="true" name="h2" ng-model="formData.h2"
