@@ -78,7 +78,6 @@ module.exports = function (app) {
 
     //// ▶▶ create login ◀◀ ////
     app.post('/api/user/login',jsonParser,function(req,res){
-        console.log("debug:",req.body.user,req.body.password);
         auth.createLogin(req.body.user,req.body.password,function(err,done){
             if(err){
                 res.status=400;
