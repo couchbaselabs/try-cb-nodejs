@@ -24,12 +24,13 @@
 <body ng-app="testApp" ng-controller="flightController">
 <div class="container">
     <div class="row">
-        <div class="col-md-8">
+        <div class="col-md-12">
             <div class="panel panel-primary">
                 <div class="panel-heading">
                     <div class="container-fluid panel-container">
                         <div class="col-xs-6 text-left">
-                            <h3 class="panel-title">Find a Flight || User: {{getUser()}}</h3>
+                            <h3 class="panel-title">CBTravel - Find a Flight </h3>
+                            <small><strong>User:</strong> {{getUser()}}</small>
                         </div>
                         <ngcart-summary></ngcart-summary>
                     </div>
@@ -133,7 +134,7 @@
         <div class="col-md-4"></div>
     </div>
     <div class="row">
-        <div class="col-md-8">
+        <div class="col-md-12">
             <div class="panel panel-primary" ng-show="!empty">
                 <div class="panel-heading">
                     <h3 class="panel-title">Available Flights </h3>

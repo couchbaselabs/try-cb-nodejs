@@ -371,15 +371,22 @@ angular.module('ngCart.directives', ['ngCart.fulfilment'])
         };
     }])
 
-    .directive('ngcartCart', [function(){
+    .directive('ngcartCart', ['$http', function($http){
         return {
-            restrict : 'E',
-            controller : 'CartController',
+            restrict: 'E',
+            controller: 'CartController',
             scope: {},
             templateUrl: 'template/ngCart/cart.html',
-            link:function(scope, element, attrs){
-                scope.book =function(){
-                    console.log("ITEM",this.ngCart.getItems());
+            link: function (scope, element, attrs) {
+                scope.book = function () {
+                    console.log("ITEM", this.ngCart.getItems());
+                    $http.post('/api/user/flights', {
+                        user: 'todd',
+                        flights: this.ngCart.getItems()
+                    })
+                        .then(function (response) {
+                                  console.log("RESPONSE:",response);
+                              });
                 }
             }
         };

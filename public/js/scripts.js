@@ -44,6 +44,7 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
         try {
             return jwtHelper.decodeToken($cookieStore.get('token')).user;
         } catch (e){
+            ngCart.empty();
             $window.location.href="http://" + $window.location.host + "/login.html";
         }
     }

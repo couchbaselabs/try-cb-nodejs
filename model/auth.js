@@ -20,7 +20,8 @@ module.exports.createLogin = function (newUser,newPass,done) {
                     var userNew = new User({
                         name:newUser,
                         password:newPass,
-                        token:jwt.sign({user:newUser},sec)
+                        token:jwt.sign({user:newUser},sec),
+                        flights:[]
                                            });
                     // Save User
                     userNew.save(function(err) {
@@ -65,12 +66,37 @@ module.exports.login=function(user,pass,done){
                 done(null,{"failure":"Bad Username or Password"});
                 return;
             }else{
-                done(null,{"success":found.token});
+                done(null,{"success":found[0].token});
                 return;
             }
         }
     })
 }
+
+module.exports.book=function(user,flights,done){
+    User.findByName(user,function(err,found){
+        if(found) {
+            found[0].addflights(flights, function (err, count) {
+                if (err) {
+                    done("error adding flights", null);
+                    return;
+                }
+                if (count) {
+                    found[0].save(function (err) {
+                        if (err) {
+                            done(err, null);
+                            return;
+                        }
+                        done(null, count);
+                        return;
+                    });
+                }
+            });
+        }
+    });
+
+}
+
 
 var filter = ["put","banned","words","in","here"];
 

@@ -7,6 +7,10 @@
         <i class="glyphicon glyphicon-shopping-cart">
         </i>
     </a>
+    <a class="btn btn-primary" ng-class="{ active: isActive('/user.html')}"  href="/user.html">
+        <i class="glyphicon glyphicon-user">
+        </i>
+    </a>
 </div>
 <div class="col-xs-2">{{ ngCart.getTotalItems() }}
     <ng-pluralize count="ngCart.getTotalItems()" when="{1: 'item', 'other':'items'}"></ng-pluralize>
