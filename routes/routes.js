@@ -106,8 +106,23 @@ module.exports = function (app) {
         });
     });
 
+    //// ▶▶ book flights ◀◀ ////
     app.post('/api/user/flights',jsonParser,function(req,res){
-        auth.book(req.body.user,req.body.flights,function(err,done){
+        auth.book(req.body.token,req.body.flights,function(err,done){
+            if(err){
+                res.status=400;
+                res.send(err);
+                return;
+            }
+            res.status=202;
+            res.send({added:done});
+            return;
+        });
+    });
+
+    //// ▶▶ booked flights ◀◀ ////
+    app.get('/api/user/flights',urlencodedParser,function(req,res){
+        auth.booked(req.query.token,function(err,done){
             if(err){
                 res.status=400;
                 res.send(err);

@@ -7,7 +7,8 @@ var FlightMdl = ottoman.model('Flight', {
     flight: 'string',
     date:'string',
     sourceairport:'string',
-    destinationairport:'string'
+    destinationairport:'string',
+    bookedon:'string'
 });
 
 module.exports=FlightMdl;

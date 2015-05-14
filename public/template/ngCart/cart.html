@@ -1,6 +1,6 @@
 
-<div class="alert alert-warning" role="alert" ng-show="ngCart.getTotalItems() === 0">
-    Your cart is empty
+<div class="alert alert-warning" role="alert" ng-show="ngCart.getTotalItems() === 0 && !ngCart.complete">
+    Your cart is empty - Click the user profile icon above to view previously booked itineraries.
 </div>
 
 <div class="table-responsive col-lg-12" ng-show="ngCart.getTotalItems() > 0">

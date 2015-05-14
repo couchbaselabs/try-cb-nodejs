@@ -153,6 +153,7 @@ angular.module('ngCart', ['ngCart.directives'])
             localStorage.removeItem('cart');
         };
 
+
         this.toObject = function() {
 
             if (this.getItems().length === 0) return false;
@@ -371,7 +372,7 @@ angular.module('ngCart.directives', ['ngCart.fulfilment'])
         };
     }])
 
-    .directive('ngcartCart', ['$http', function($http){
+    .directive('ngcartCart', ['$http','$cookieStore','$rootScope', function($http,$cookieStore,$rootScope){
         return {
             restrict: 'E',
             controller: 'CartController',
@@ -379,13 +380,14 @@ angular.module('ngCart.directives', ['ngCart.fulfilment'])
             templateUrl: 'template/ngCart/cart.html',
             link: function (scope, element, attrs) {
                 scope.book = function () {
-                    console.log("ITEM", this.ngCart.getItems());
                     $http.post('/api/user/flights', {
-                        user: 'todd',
+                        token: $cookieStore.get('token'),
                         flights: this.ngCart.getItems()
                     })
                         .then(function (response) {
-                                  console.log("RESPONSE:",response);
+                                                     if(response.data.added>0){
+                                                         scope.ngCart.empty();
+                                                     }
                               });
                 }
             }

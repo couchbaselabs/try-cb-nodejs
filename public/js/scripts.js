@@ -6,8 +6,10 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
     $scope.empty=true;
     $scope.cart=false;
     $scope.retEmpty=true;
+    $scope.fliEmpty=true;
     $scope.rowCollectionLeave=[];
     $scope.rowCollectionRet=[];
+    $scope.rowCollectionFlight=[];
     $scope.login = function(){
         var curUser=this.formData.username;
         if(this.formData.h2.indexOf("Create")!=-1){
@@ -82,6 +84,19 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
             });
         }
     }
+    $scope.findBookedFlights = function(){
+        $http.get("/api/user/flights",{
+            params:{token:$cookieStore.get('token')}
+        }).then(function(responseFlights){
+            if (responseFlights.data.length > 0) {
+                $scope.fliEmpty = false;
+            }
+            for (var j = 0; j < responseFlights.data.length; j++) {
+                $scope.rowCollectionFlight.push(responseFlights.data[j]);
+            }
+        });
+    }
+
 
     $scope.removeRow=function(row) {
         var index = $scope.rowCollectionLeave.indexOf(row);

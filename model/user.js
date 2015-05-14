@@ -7,7 +7,7 @@ var UserMdl = ottoman.model('User', {
     name: 'string',
     password: 'string',
     token:'string',
-    flights:[Flight]
+    flights:'Mixed'
 }, {
     index: {
         findByName: {
@@ -21,7 +21,6 @@ UserMdl.prototype.addflights = function (newFlights, done) {
     if (typeof this.flights.length === 'undefined') {
         this.flights = [];
     }
-    console.log("debug:flights:", newFlights);
     var curCount = 0;
     for (var i = 0; i < newFlights.length; i++) {
         var curFlight = new Flight({
@@ -29,7 +28,8 @@ UserMdl.prototype.addflights = function (newFlights, done) {
                                        flight: newFlights[i]._data.flight,
                                        date: newFlights[i]._data.date,
                                        sourceairport: newFlights[i]._data.sourceairport,
-                                       destinationairport: newFlights[i]._data.destinationairport
+                                       destinationairport: newFlights[i]._data.destinationairport,
+                                       bookedon:new Date().getTime().toString()
                                    });
         this.flights.push(curFlight);
     }

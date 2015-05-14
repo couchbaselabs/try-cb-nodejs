@@ -73,8 +73,11 @@ module.exports.login=function(user,pass,done){
     })
 }
 
-module.exports.book=function(user,flights,done){
-    User.findByName(user,function(err,found){
+module.exports.book=function(token,flights,done){
+    User.findByName(jwt.decode(token).user,function(err,found){
+        if(err){
+            done(err,null)
+        }
         if(found) {
             found[0].addflights(flights, function (err, count) {
                 if (err) {
@@ -97,6 +100,21 @@ module.exports.book=function(user,flights,done){
 
 }
 
+module.exports.booked =function(token,done){
+    User.findByName(jwt.decode(token).user,function(err,found){
+        if(err){
+            done(err,null);
+            return;
+        }
+        if(found) {
+            done(null,found[0].flights);
+            return;
+            }else{
+            done(null,"{}")
+            return;
+        }
+    });
+}
 
 var filter = ["put","banned","words","in","here"];
 

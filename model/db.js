@@ -18,6 +18,9 @@ var status="offline";  //offline,pending,online
  */
 function init(done) {
     console.log({init: "check"});
+    if(config.application.verbose){
+        console.log("VERBOSE:TRYING QUERY:","http://" + config.couchbase.n1qlService + "/query?statement=SELECT+name+FROM+system%3Akeyspaces")
+    }
     request.get({
                     url: "http://" + config.couchbase.n1qlService + "/query?statement=SELECT+name+FROM+system%3Akeyspaces",
                     auth: {
@@ -29,12 +32,16 @@ function init(done) {
         if (err) {
             console.log({init: "not ready"});
             if (config.application.verbose) {
-                console.log("VERBOSE:", err);
+                console.log("↳ VERBOSE:ERR:", err);
             }
             done(false);
             return;
         }
         if (response.statusCode == 200) {
+            if(config.application.verbose){
+                console.log("↳ VERBOSE:QUERY SERVICE:UP");
+                console.log("--VERBOSE:TRYING:ITEM COUNT","http://" + endPoint + "/pools/default/buckets/" + bucket)
+            }
             request.get({
                             url: "http://" + endPoint + "/pools/default/buckets/" + bucket,
                             auth: {
@@ -46,12 +53,12 @@ function init(done) {
                 if (err) {
                     console.log({init: "not ready"});
                     if (config.application.verbose) {
-                        console.log("VERBOSE:", err);
+                        console.log("--↳ VERBOSE:ERR", err);
                     }
                     done(false);
                     return;
                 }
-                if (parseInt(JSON.parse(bodyB).basicStats.itemCount) > 31620) {
+                if (parseInt(JSON.parse(bodyB).basicStats.itemCount) > 31619) {
                     myBucket = myCluster.openBucket(bucket);
                     db = myBucket;
                     enableN1QL(function () {
@@ -98,7 +105,7 @@ function init(done) {
                 } else {
                     console.log({init: "not ready"});
                     if (config.application.verbose) {
-                        console.log("VERBOSE:ITEM COUNT", JSON.parse(bodyB).basicStats.itemCount);
+                        console.log("--↳ VERBOSE:ERR:ITEM COUNT", JSON.parse(bodyB).basicStats.itemCount);
                     }
                     done(false);
                     return;

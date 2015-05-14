@@ -58,6 +58,9 @@ function buidIndexes(done) {
         db.query('CREATE PRIMARY INDEX on `' + config.couchbase.bucket + '` USING ' + config.couchbase.indexType,
                  function (err, res) {
                  });
+        db.query('CREATE INDEX def_name_type on `' + config.couchbase.bucket + "`(name) WHERE _type='User' USING " + config.couchbase.indexType,
+                 function (err, res) {
+                 });
         var cbCount = indexesCB.length - 1;
         for (var i = 0; i < indexesCB.length; i++) {
             var sql = ('CREATE INDEX def_' + indexesCB[i] + ' ON `' + config.couchbase.bucket + '`(' + indexesCB[i] + ') USING ' + config.couchbase.indexType);
@@ -78,9 +81,13 @@ function buidIndexes(done) {
         }
     }
     if (config.couchbase.indexType == 'gsi') {
-        var buildStr = 'BUILD INDEX ON `' + config.couchbase.bucket + '`(def_primary';
+        var buildStr = 'BUILD INDEX ON `' + config.couchbase.bucket + '`(def_primary,def_name_type';
         var indexesCB = ['faa', 'icao', 'city', 'airportname', 'type', 'sourceairport'];
         db.query('CREATE PRIMARY INDEX def_primary on `' + config.couchbase.bucket + '` USING ' + config.couchbase.indexType +
+                 ' WITH{"defer_build":true}',
+                 function (err, res) {
+                 });
+        db.query('CREATE INDEX def_name_type on `' + config.couchbase.bucket + "`(name) WHERE _type='User' USING " + config.couchbase.indexType +
                  ' WITH{"defer_build":true}',
                  function (err, res) {
                  });
@@ -226,12 +233,12 @@ function isAvailable(done){
 function isOnline(done){
     tryCount=0;
     timerOnline = setInterval(function () {
-        console.log("CHECKING IF 7 INDEXES ARE ONLINE:ATTEMPT ",++tryCount);
+        console.log("CHECKING IF 8 INDEXES ARE ONLINE:ATTEMPT ",++tryCount);
         db.query('SELECT COUNT(*) FROM system:indexes WHERE state="online"', function(err,onlineCount){
             if(onlineCount){
                 console.log("INDEXES ONLINE:",onlineCount);
                 if(typeof onlineCount[0]!== "undefined") {
-                    if (onlineCount[0].$1 == 7&&!online) {
+                    if (onlineCount[0].$1 == 8&&!online) {
                         online=true;
                         clearInterval(timerOnline);
                         done(true);
