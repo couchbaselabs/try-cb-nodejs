@@ -1,7 +1,0 @@
-#!/bin/sh
-
-/usr/local/bin/couchbase-start &
-
-sleep 10
-
-node app.js
