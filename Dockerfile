@@ -50,4 +50,6 @@ RUN /usr/src/app/config.batinc
 
 EXPOSE 3000 8091 8092 8093 11210 11211
 
+ENTRYPOINT ["/bin/bash", "-c"]
+
 CMD ["/usr/src/app/app.cmd"]
