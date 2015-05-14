@@ -1,14 +1,15 @@
-# The *.batinc files are for building a "batteries included" docker
-# image, where database, application and sample data are all included
-# and pre-installed in a single docker image for ease of use.
+# This Dockerfile and related *.batinc files are for building a
+# "batteries included" docker image, where database, application and
+# sample data are all included and pre-installed in a single docker
+# image for ease of use.
 #
-# To build the try-cb-nodejs.batinc docker image...
+# To build the try-cb-nodejs docker image...
 #
-#    docker build -t try-cb-nodejs.batinc -f Dockerfile.batinc .
+#    docker build -t try-cb-nodejs .
 #
-# To launch the try-cb-nodejs.batinc docker image in a container instance...
+# To launch the try-cb-nodejs docker image in a container instance...
 #
-#    docker run -it --rm -p 3000:3000 -p 8091:8091 try-cb-nodejs.batinc
+#    docker run -it --rm -p 3000:3000 -p 8091:8091 try-cb-nodejs
 #
 FROM couchbase/server:enterprise-4.0.0-dp
 
