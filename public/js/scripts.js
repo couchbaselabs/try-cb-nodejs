@@ -12,6 +12,7 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
     $scope.rowCollectionFlight=[];
     $scope.login = function(){
         var curUser=this.formData.username;
+        $cookieStore.remove('token');
         if(this.formData.h2.indexOf("Create")!=-1){
             $http.post("/api/user/login",{user:curUser,
                 password:md5.createHash(this.formData.password)})

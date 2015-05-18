@@ -22,7 +22,7 @@ UserMdl.prototype.addflights = function (newFlights, done) {
         this.flights = [];
     }
     var curCount = 0;
-    for (var i = 0; i < newFlights.length; i++) {
+    for (var i = 0; i < newFlights.length; i++,curCount++) {
         var curFlight = new Flight({
                                        name: newFlights[i]._data.name,
                                        flight: newFlights[i]._data.flight,
@@ -33,7 +33,7 @@ UserMdl.prototype.addflights = function (newFlights, done) {
                                    });
         this.flights.push(curFlight);
     }
-    if (curCount = (newFlights.length - 1)) {
+    if (curCount == (newFlights.length)) {
         done(null, curCount);
         return;
     }

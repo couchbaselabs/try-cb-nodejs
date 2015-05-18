@@ -34,6 +34,7 @@ angular.module('ngCart', ['ngCart.directives'])
                 shipping : null,
                 taxRate : null,
                 tax : null,
+                complete : false,
                 items : []
             };
         };
@@ -376,7 +377,8 @@ angular.module('ngCart.directives', ['ngCart.fulfilment'])
         return {
             restrict: 'E',
             controller: 'CartController',
-            scope: {},
+            scope: {
+            },
             templateUrl: 'template/ngCart/cart.html',
             link: function (scope, element, attrs) {
                 scope.book = function () {
@@ -387,6 +389,7 @@ angular.module('ngCart.directives', ['ngCart.fulfilment'])
                         .then(function (response) {
                                                      if(response.data.added>0){
                                                          scope.ngCart.empty();
+                                                         scope.ngCart.$cart.complete=true;
                                                      }
                               });
                 }

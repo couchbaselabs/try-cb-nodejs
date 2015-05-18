@@ -7,6 +7,7 @@ var sec=config.application.hashToken;
 
 module.exports.createLogin = function (newUser,newPass,done) {
     // Check if user Exists
+    newUser=newUser.toLowerCase();
     filterScan(newUser, function (filtcb) {
         if (filtcb) {
             User.findByName(newUser, function (err, user) {
