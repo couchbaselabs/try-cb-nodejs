@@ -415,7 +415,10 @@ angular.module('ngCart.directives', ['ngCart.fulfilment'])
                         return true;
                     }
                     return false;
-                }
+                },
+                    scope.logout=function(){
+
+                    }
             }
         };
     }])

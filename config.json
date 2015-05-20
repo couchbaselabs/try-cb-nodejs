@@ -11,7 +11,8 @@
     "indexType":"gsi",
     "showQuery":true,
     "indexMemQuota":2048,
-    "dataMemQuota":1024
+    "dataMemQuota":1024,
+    "thresholdItemCount":31565
   },
   "application":{
     "httpPort":3000,

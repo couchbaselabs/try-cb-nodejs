@@ -58,7 +58,7 @@ function init(done) {
                     done(false);
                     return;
                 }
-                if (parseInt(JSON.parse(bodyB).basicStats.itemCount) > 31619) {
+                if (parseInt(JSON.parse(bodyB).basicStats.itemCount) > config.couchbase.thresholdItemCount) {
                     myBucket = myCluster.openBucket(bucket);
                     db = myBucket;
                     enableN1QL(function () {
