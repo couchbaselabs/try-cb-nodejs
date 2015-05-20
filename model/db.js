@@ -7,11 +7,12 @@ var couchbase = require('couchbase');
 var endPoint = config.couchbase.endPoint;
 var bucket = config.couchbase.bucket;
 var myCluster = new couchbase.Cluster(endPoint);
-var ODMBucket = myCluster.openBucket(bucket);
+var ODMBucket;// = myCluster.openBucket(bucket);
 var db;
 var http=require('http');
 var request=require('request');
 var status="offline";  //offline,pending,online
+var ottoman = require('ottoman');
 
 /**
  * 
@@ -61,8 +62,7 @@ function init(done) {
                 if (parseInt(JSON.parse(bodyB).basicStats.itemCount) > config.couchbase.thresholdItemCount) {
                     myBucket = myCluster.openBucket(bucket);
                     db = myBucket;
-                    enableN1QL(function () {
-                    });
+                    //enableN1QL(function () {});
                     query("CREATE INDEX temp ON `" + config.couchbase.bucket + "`(non) USING " + config.couchbase.indexType,
                           function (err, res) {
                               if (err) {
@@ -91,6 +91,8 @@ function init(done) {
                                                                   }
                                                                   if (dropped && status != "online") {
                                                                       status = "online";
+                                                                      ODMBucket = myCluster.openBucket(bucket);
+                                                                      ottoman.store.bucket=ODMBucket;
                                                                       console.log({init: "ready"});
                                                                       done(true);
                                                                       return;
