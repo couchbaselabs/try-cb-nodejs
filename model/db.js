@@ -62,6 +62,8 @@ function init(done) {
                 if (parseInt(JSON.parse(bodyB).basicStats.itemCount) > config.couchbase.thresholdItemCount) {
                     myBucket = myCluster.openBucket(bucket);
                     db = myBucket;
+                    ODMBucket = myCluster.openBucket(bucket);
+                    ottoman.store.bucket=ODMBucket;
                     //enableN1QL(function () {});
                     query("CREATE INDEX temp ON `" + config.couchbase.bucket + "`(non) USING " + config.couchbase.indexType,
                           function (err, res) {
@@ -91,8 +93,6 @@ function init(done) {
                                                                   }
                                                                   if (dropped && status != "online") {
                                                                       status = "online";
-                                                                      ODMBucket = myCluster.openBucket(bucket);
-                                                                      ottoman.store.bucket=ODMBucket;
                                                                       console.log({init: "ready"});
                                                                       done(true);
                                                                       return;
