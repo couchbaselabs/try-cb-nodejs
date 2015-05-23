@@ -397,7 +397,7 @@ angular.module('ngCart.directives', ['ngCart.fulfilment'])
         };
     }])
 
-    .directive('ngcartSummary', ['$location',function(location){
+    .directive('ngcartSummary', ['$location','$cookieStore',function(location,$cookieStore){
         return {
             restrict : 'AEC',
             controller : 'CartController',
@@ -418,6 +418,9 @@ angular.module('ngCart.directives', ['ngCart.fulfilment'])
                 },
                     scope.logout=function(){
 
+                    },
+                    scope.getUser=function(){
+                        return $cookieStore.get('user');
                     }
             }
         };

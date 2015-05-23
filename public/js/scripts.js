@@ -13,6 +13,7 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
     $scope.login = function(){
         var curUser=this.formData.username;
         $cookieStore.remove('token');
+        $cookieStore.remove('user');
         if(this.formData.h2.indexOf("Create")!=-1){
             $http.post("/api/user/login",{user:curUser,
                 password:md5.createHash(this.formData.password)})
@@ -20,6 +21,7 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
                                      if(response.data.success){
                                          $scope.formData.error=null;
                                          $cookieStore.put('token',response.data.success);
+                                         $cookieStore.put('user',jwtHelper.decodeToken(response.data.success).user);
                                          $window.location.href="http://" + $window.location.host + "/index.html";
                                      }
                                       if(response.data.failure) {
@@ -34,6 +36,7 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
                                       if(response.data.success){
                                           $scope.formData.error=null;
                                           $cookieStore.put('token',response.data.success);
+                                          $cookieStore.put('user',jwtHelper.decodeToken(response.data.success).user)
                                           $window.location.href="http://" + $window.location.host + "/index.html";
                                       }
                                       if(response.data.failure) {
@@ -155,13 +158,13 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
         if(!state){
             $("#retDate").hide();
             $("#retSpan").hide();
-            $("#retLabel").html("One Way");
+            $("#retLabel").html("ONE WAY");
             $scope.retEmpty=true;
             $scope.$apply();
         }else{
             $("#retDate").show();
             $("#retSpan").show();
-            $("#retLabel").html("Round Trip");
+            $("#retLabel").html("ROUND TRIP");
             $scope.retEmpty=false;
             $scope.$apply();
         }
