@@ -113,7 +113,7 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
         $scope.rowCollectionLeave=[];
         $scope.rowCollectionLeave.push(row);
         row.date=this.leave;
-        ngCart.addItem(row.flight,row.name +"-"+row.flight,100,1,row);
+        ngCart.addItem(row.flight,row.name +"-"+row.flight,row.price,1,row);
         var tempRet=[];
         for (var k=0;k<$scope.rowCollectionRet.length;k++){
             if($scope.rowCollectionRet[k].name == row.name){
@@ -134,7 +134,7 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
         $scope.rowCollectionRet=[];
         $scope.rowCollectionRet.push(row);
         row.date=this.ret;
-        ngCart.addItem(row.flight,row.name +"-"+row.flight,100,1,row);
+        ngCart.addItem(row.flight,row.name +"-"+row.flight,row.price,1,row);
         var tempLeave=[];
         for (var j=0;j<$scope.rowCollectionLeave.length;j++){
             if($scope.rowCollectionLeave[j].name == row.name){

@@ -135,6 +135,7 @@
                             <th>From</th>
                             <th>To</th>
                             <th>Aircraft</th>
+                            <th>Price</th>
                             <th>Reservation</th>
                         </tr>
                         </thead>
@@ -146,6 +147,7 @@
                             <td>{{row.sourceairport | uppercase}}</td>
                             <td>{{row.destinationairport | uppercase}}</td>
                             <td>{{row.equipment}}</td>
+                            <td>${{row.price}}</td>
                             <td>
                                 <button class="btn btn-xs btn-primary" ng-click="selectRow(row)" type="button">Choose
                                 </button>
@@ -170,6 +172,7 @@
                             <th>From</th>
                             <th>To</th>
                             <th>Aircraft</th>
+                            <th>Price</th>
                             <th>Reservation</th>
                         </tr>
                         </thead>
@@ -181,6 +184,7 @@
                             <td>{{rowRet.sourceairport | uppercase}}</td>
                             <td>{{rowRet.destinationairport | uppercase}}</td>
                             <td>{{rowRet.equipment}}</td>
+                            <td>${{rowRet.price}}</td>
                             <td>
                                 <button class="btn btn-xs btn-primary" ng-click="selectRowRet(rowRet)"
                                         type="button">Choose
