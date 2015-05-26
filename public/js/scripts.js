@@ -7,6 +7,8 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
     $scope.cart=false;
     $scope.retEmpty=true;
     $scope.fliEmpty=true;
+    $scope.leave="";
+    $scope.ret="";
     $scope.rowCollectionLeave=[];
     $scope.rowCollectionRet=[];
     $scope.rowCollectionFlight=[];
@@ -65,6 +67,7 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
         $scope.empty = true;
         $scope.rowCollectionLeave = [];
         $scope.rowCollectionRet = [];
+        $scope.leave=this.leave;
         $http.get("/api/flightPath/findAll", {
             params: {from: this.fromName, to: this.toName, leave: this.leave}
         }).then(function (response) {
@@ -72,10 +75,14 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
                 $scope.empty = false;
             }
             for (var j = 0; j < response.data.length; j++) {
+                var d= new Date(Date.parse($scope.leave + " " + response.data[j].utc));
+                d.setHours(d.getHours()+response.data[j].flighttime);
+                response.data[j].utcland = d.getHours() + ":" + d.getMinutes() + ":00";
                 $scope.rowCollectionLeave.push(response.data[j]);
             }
         });
         if (this.ret) {
+            $scope.ret=this.ret;
             $http.get("/api/flightPath/findAll", {
                 params: {from: this.toName, to: this.fromName, leave: this.ret}
             }).then(function (responseRet) {
@@ -83,6 +90,9 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
                     $scope.retEmpty = false;
                 }
                 for (var j = 0; j < responseRet.data.length; j++) {
+                    var d= new Date(Date.parse($scope.ret + " " + responseRet.data[j].utc));
+                    d.setHours(d.getHours()+responseRet.data[j].flighttime);
+                    responseRet.data[j].utcland = d.getHours() + ":" + d.getMinutes() + ":00";
                     $scope.rowCollectionRet.push(responseRet.data[j]);
                 }
             });

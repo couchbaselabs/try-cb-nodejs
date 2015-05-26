@@ -21,6 +21,7 @@
     "checkInterval":1000,
     "verbose":false,
     "distanceCostMultiplier":0.1,
+    "avgKmHr":800,
     "hashToken":"UNSECURE_SECRET_TOKEN"
   }
 }
