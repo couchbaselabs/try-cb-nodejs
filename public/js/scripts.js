@@ -47,15 +47,6 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
                                   });
             }
         }
-
-    $scope.getUser = function(){
-        try {
-            return jwtHelper.decodeToken($cookieStore.get('token')).user;
-        } catch (e){
-            ngCart.empty();
-            $window.location.href="http://" + $window.location.host + "/login.html";
-        }
-    }
     $scope.findAirports=function(val){
         return $http.get("/api/airport/findAll",{
             params:{search:val}
