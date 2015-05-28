@@ -18,6 +18,7 @@
     "body-parser": "*",
     "request": "*",
     "jsonwebtoken":"*",
+    "haversine":"*",
     "ottoman":"git+https://github.com/couchbaselabs/node-ottoman.git#refactor"
   },
   "contributors": [
