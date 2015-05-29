@@ -1,52 +1,38 @@
 
-
-var threshold=100;
-var testInterval=5;
-var currentCount=0;
-var itemCount=0;
 var active=false;
 var available=false;
 var online=false;
-var timerBatch;
 var timerActive;
 var timerAvailable;
 var timerOnline;
 var config = require('./../../config');
 var request=require('request');
 var db=require('./../db');
+var fs = require('fs');
 var tryCount=0;
 var checkInterval=config.application.checkInterval;
 
 /**
  *
- * @param category
- * @param done
  */
-function ingest(category, done) {
-    raw = require('./rawJsonAir');
-    exists(category,function(err,exists){
+if(config.application.autoprovision){
+    console.log("AUTOPROVISION:INITIATED");
+    provisionCB(function(err,done){
         if(err){
-            console.log("ERR:",err);
-            done({'err':category+" not valid"},null);
-            return;
+            console.log("AUTOPROVISION:ERR:FATAL:",err);
+          return;
         }
-        active=true;
-        itemCount=raw[category].length-1;
-        console.log({'category':category + ' load'});
-        batch(category);
-        isActive(5,function(err,idle){
+        config.application.autoprovision=false;
+        fs.writeFile('config.json', JSON.stringify(config,null,4),function(err){
             if(err){
-                done({'err':category+" ingesting"},null);
-                return;
+                console.log("AUTOPROVISION:ERR:FILESAVE:",err)
             }
-            if(idle){
-                console.log({'category':category + ' loaded'});
-                done(null,{'category':category});
-                return;
-            }
-        })
+        });
+        console.log("AUTOPROVISION:DONE:",done);
+        return;
     });
 }
+
 
 /**
  *
@@ -145,49 +131,6 @@ function exists(category,done){
 
 /**
  *
- * @param category
- */
-function load(category){
-    db.upsert((category=="routes")?"route_"+raw[category][itemCount].id:(category=="airlines")?
-        "airline_"+raw[category][itemCount].id:"airport_"+raw[category][itemCount].id,
-              (category=="routes")?buildSchedule(raw[category][itemCount].airline,raw[category][itemCount]):raw[category][itemCount],function(err,result){
-        if(err){
-            console.log("ERR:",err);
-        }
-        if(result && itemCount>0)
-        {
-            itemCount--;
-            load(category);
-        }else{
-            currentCount--;
-            if(currentCount==0){
-                active=false;
-            }
-            //console.log("BUFFER DECREASE:",currentCount);
-        }
-    });
-}
-
-/**
- *
- * @param category
- */
-function batch(category){
-    timerBatch=setInterval(function () {
-                          if (currentCount < threshold && active) {
-                              // console.log("INCR:",currentCount);
-                              currentCount++;
-                              load(category);
-                          } else {
-                              clearInterval(timerBatch);
-                              // console.log("TMR:STOPPED");
-                          }
-                      }, testInterval
-    );
-}
-
-/**
- *
  * @param cutOff
  * @param done
  */
@@ -248,54 +191,6 @@ function isOnline(done){
             }
         });
     }, checkInterval);
-}
-
-/**
- *
- * @param low
- * @param high
- * @returns {number}
- */
-function randomIntInc(low, high) {
-    return Math.floor(Math.random() * (high - low + 1) + low);
-}
-
-/**
- *
- * @returns {string}
- */
-function randomTime(){
-    var hour = randomIntInc(0,23);
-    if (hour<10) hour="0"+String(hour);
-    var minute =randomIntInc(0,59);
-    if (minute<10) minute="0"+String(minute);
-    return hour+":"+minute+":"+"00"
-}
-
-/**
- *
- * @param airline
- * @returns {string}
- */
-function randomFlightNum(airline){
-    return airline + String(randomIntInc(0,9))+String(randomIntInc(0,9))+String(randomIntInc(0,9));
-}
-
-/**
- *
- * @param airline
- * @param doc
- * @returns {*}
- */
-function buildSchedule(airline,doc) {
-    var days = 7;  //Adds a schedule entry for at leat every day.
-    var numFlightsDay=randomIntInc(1,5);
-    for (var i = 1; i <=days; i++) {
-        for (var j =1; j<=numFlightsDay;j++){
-            doc.schedule.push({day:i,utc:randomTime(),flight:randomFlightNum(airline)});
-        }
-    }
-    return doc;
 }
 
 /**
@@ -423,35 +318,6 @@ function provisionAdmin(done) {
  * @param done
  */
 function provisionBucket(done) {
-    if(config.application.dataSource=="repo"){
-        request.post({
-                         url: 'http://'+ config.couchbase.endPoint+'/pools/default/buckets',
-                         form: {flushEnabled:'1',
-                             threadsNumber:'3',
-                             replicaIndex:'0',
-                             replicaNumber:'0',
-                             evictionPolicy:'valueOnly',
-                             ramQuotaMB:'1024',
-                             bucketType:'membase',
-                             name:config.couchbase.bucket,
-                             authType:'sasl',
-                             saslPassword:null
-                         },
-                         auth: {
-                             'user': config.couchbase.user,
-                             'pass': config.couchbase.password,
-                             'sendImmediately': true
-                         }
-                     }, function (err, httpResponse, body) {
-            if(err){
-                done(err,null);
-                return;
-            }
-            console.log({'provisionBucket':httpResponse.statusCode});
-            done(null,httpResponse.statusCode);
-
-        });
-    }
     if(config.application.dataSource=="embedded"){
         request.post({
                          url: 'http://'+ config.couchbase.endPoint+'/sampleBuckets/install',
@@ -542,49 +408,6 @@ function provision(done) {
  *
  * @param done
  */
-function loadData(done){
-    ingest("airports",function(err,airports){
-        if(err){
-            done(err,null);
-            return;
-        }
-        if(airports){
-            ingest("airlines",function(err,airlines){
-                if(err){
-                    done(err,null);
-                    return;
-                }
-                if(airlines){
-                    ingest("routes",function(err,routes){
-                        if(err){
-                            done(err,null);
-                            return;
-                        }
-                        if(routes){
-                            buidIndexes(function(err,indexed){
-                                if(err){
-                                    done(err,null);
-                                    return;
-                                }
-                                if(indexed){
-                                            console.log({'bucket':config.couchbase.bucket +' loaded'});
-                                            done(null,{'bucket':'loaded'});
-                                    return;
-                                }
-                            });
-                        }
-                    });
-                }
-            });
-        }
-    });
-}
-
-
-/**
- *
- * @param done
- */
 function provisionCB(done){
     provision(function(err,cluster){
         if(err){
@@ -592,18 +415,6 @@ function provisionCB(done){
             return;
         }
         if(cluster) {
-            if (config.application.dataSource == "repo") {
-                loadData(function (err, loaded) {
-                    if (err) {
-                        done(err, null);
-                        return;
-                    }
-                    if (loaded) {
-                        done(null, {"environment": "built"});
-                        return;
-                    }
-                });
-            }
             if (config.application.dataSource == "embedded") {
                 buidIndexes(function (err, indexed) {
                     if (err) {
@@ -620,9 +431,7 @@ function provisionCB(done){
     });
 }
 
-module.exports.ingest=ingest;
 module.exports.buildIndexes=buidIndexes;
 module.exports.provision=provision;
-module.exports.loadData=loadData;
 module.exports.provisionCB=provisionCB;
 module.exports.provisionBucket=provisionBucket;

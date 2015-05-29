@@ -73,7 +73,7 @@ module.exports = function (app) {
             res.status=202;
             res.send(done);
             return;
-        })
+        });
     });
 
     //// ▶▶ create login ◀◀ ////

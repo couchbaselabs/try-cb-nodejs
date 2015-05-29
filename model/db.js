@@ -117,11 +117,6 @@ function init(done) {
     });
 }
 
-function enableN1QL(done){
-    db.enableN1ql(config.couchbase.n1qlService);
-    done({n1ql:"enabled"});
-}
-
 init(function(){});
 
 /**
