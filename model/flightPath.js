@@ -11,6 +11,9 @@ var haversine = require('haversine');
  * @param done
  */
 module.exports.findAll = function (from, to, leave, done) {
+    if (config.application.verbose) {
+        console.log('↳ VERBOSE:FINDALLL:PARMS:',{from:from,to:to,leave:leave});
+    }
     var queryPrep = "SELECT faa as fromAirport,geo FROM `" + config.couchbase.bucket + "` WHERE airportname = '" + from +
         "' UNION SELECT faa as toAirport,geo FROM `" + config.couchbase.bucket + "` WHERE airportname = '" + to + "'";
     db.query(queryPrep, function (err, res) {
@@ -19,6 +22,7 @@ module.exports.findAll = function (from, to, leave, done) {
             return;
         }
         if (res) {
+
             var queryTo;
             var queryFrom;
             var geoStart;
@@ -53,17 +57,27 @@ module.exports.findAll = function (from, to, leave, done) {
                     return;
                 }
                 if (flightPaths) {
+                    if (config.application.verbose) {
+                        console.log('--↳ VERBOSE:FINDALLL:RESULTS:COUNT:',flightPaths.length);
+                    }
                     var resCount = flightPaths.length;
                     for (r = 0; r < flightPaths.length; r++) {
                         resCount--;
                         flightPaths[r].flighttime = flightTime;
-                        flightPaths[r].price = Math.round(price * ((100 - (Math.floor(Math.random() * (20) + 1))) / 100))
+                        flightPaths[r].price = Math.round(price * ((100 - (Math.floor(Math.random() * (20) + 1))) / 100));
 
                         if (resCount == 0) {
+                            if (config.application.verbose) {
+                                console.log('----↳ VERBOSE:FINDALLL:RESULTS:RETURNING:',flightPaths.length);
+                            }
                             done(null, flightPaths);
                             return;
                         }
                     }
+                    if (config.application.verbose) {
+                        console.log('------↳ VERBOSE:FINDALLL:RESULTS:NOT RETURNED:',flightPaths.length);
+                    }
+                    return;
                 }
             });
         }
