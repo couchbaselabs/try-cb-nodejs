@@ -117,7 +117,7 @@ module.exports.booked =function(token,done){
     });
 }
 
-var filter = ["put","banned","words","in","here"];
+var filter = [];
 
 function filterScan(term,done){
     for(var i=0; i<filter.length;i++){
