@@ -12,7 +12,7 @@ var haversine = require('haversine');
  */
 module.exports.findAll = function (from, to, leave, done) {
     if (config.application.verbose) {
-        console.log('↳ VERBOSE:FINDALLL:PARMS:',{from:from,to:to,leave:leave});
+        console.log('↳ VERBOSE:FINDALLL:',{from:from,to:to,leave:leave},':REQ');
     }
     var queryPrep = "SELECT faa as fromAirport,geo FROM `" + config.couchbase.bucket + "` WHERE airportname = '" + from +
         "' UNION SELECT faa as toAirport,geo FROM `" + config.couchbase.bucket + "` WHERE airportname = '" + to + "'";
@@ -58,7 +58,7 @@ module.exports.findAll = function (from, to, leave, done) {
                 }
                 if (flightPaths) {
                     if (config.application.verbose) {
-                        console.log('--↳ VERBOSE:FINDALLL:RESULTS:COUNT:',flightPaths.length);
+                        console.log('--↳ VERBOSE:FINDALLL:',{from:from,to:to,leave:leave},':RESULTS:COUNT:',flightPaths.length);
                     }
                     var resCount = flightPaths.length;
                     for (r = 0; r < flightPaths.length; r++) {
@@ -68,14 +68,14 @@ module.exports.findAll = function (from, to, leave, done) {
 
                         if (resCount == 0) {
                             if (config.application.verbose) {
-                                console.log('----↳ VERBOSE:FINDALLL:RESULTS:RETURNING:',flightPaths.length);
+                                console.log('----↳ VERBOSE:FINDALLL:',{from:from,to:to,leave:leave},':RESULTS:RETURNING:',flightPaths.length);
                             }
                             done(null, flightPaths);
                             return;
                         }
                     }
                     if (config.application.verbose) {
-                        console.log('------↳ VERBOSE:FINDALLL:RESULTS:NOT RETURNED:',flightPaths.length);
+                        console.log('------↳ VERBOSE:FINDALLL:',{from:from,to:to,leave:leave},':RESULTS:NOT RETURNED:',flightPaths.length);
                     }
                     return;
                 }
