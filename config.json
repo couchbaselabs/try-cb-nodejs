@@ -15,7 +15,7 @@
         "thresholdItemCount": 31565
     },
     "application": {
-        "autoprovision": false,
+        "autoprovision": true,
         "httpPort": 3000,
         "dataSource": "embedded",
         "wait": 3000,
