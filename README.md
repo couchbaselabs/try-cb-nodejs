@@ -10,12 +10,11 @@ The steps below assume you are running a standalone couchbase instance running k
  - [2] Install Node.js
  - [3] Make a directory, clone this repo, install dependencies, start the application.  From a terminal:   
 
-```bash
-$ mkidr ~/try-cb    
-$ git clone https://github.com/ToddGreenstein/try-cb-nodejs.git $ ~/try-cb   
-$ cd ~/try-cb    
-$ npm install    
-$ node app.js
+    mkidr ~/try-cb    
+    git clone https://github.com/ToddGreenstein/try-cb-nodejs.git $ ~/try-cb   
+    cd ~/try-cb    
+    npm install    
+    node app.js
 ```
 
  - [4] Open a browser and load the url http://localhost:3000
