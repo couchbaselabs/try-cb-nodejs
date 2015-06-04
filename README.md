@@ -15,8 +15,7 @@ The steps below assume you are running a standalone couchbase instance running k
     cd ~/try-cb    
     npm install    
     node app.js
-```
-
+    
  - [4] Open a browser and load the url http://localhost:3000
 
 **NOTE**: Once the application has provisioned the cluster it will update the config.json file and set "autoprovision":false.  The app can then be stopped and started and it will not attempt to provision the cluster again.  
