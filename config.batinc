@@ -1,0 +1,35 @@
+#!/bin/sh
+
+npm install couchbase
+
+/usr/local/bin/couchbase-start &
+
+sleep 10
+
+/opt/couchbase/bin/couchbase-cli cluster-init \
+  --cluster=127.0.0.1:8091 \
+  -u Administrator -p password \
+  --cluster-ramsize=500 \
+  --services="data;index;query"
+
+sleep 10
+
+/opt/couchbase/bin/cbdocloader \
+  -n 127.0.0.1:8091 -u Administrator -p password \
+  -b travel-sample -s 400 /opt/couchbase/samples/travel-sample.zip
+
+sleep 10
+
+node app.js &
+
+sleep 10
+
+curl -v -X POST http://127.0.0.1:3000/api/status/provisionCB
+
+sleep 10
+
+ps | grep node | cut -f 2 -d ' ' | xargs kill
+
+/etc/init.d/couchbase-server stop
+
+sleep 10
