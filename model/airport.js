@@ -7,7 +7,7 @@ var config = require('./../config');
  * @param queryStr
  * @param done
  */
-module.exports.findAll = function (queryStr, done) {
+module.exports.findAll = function (queryStr,user,done) {
     var queryPrep;
     if (queryStr.length == 3) {
         queryPrep = "SELECT airportname FROM `" + config.couchbase.bucket + "` WHERE faa ='" + queryStr.toUpperCase() + "'";
@@ -17,7 +17,7 @@ module.exports.findAll = function (queryStr, done) {
         queryPrep = "SELECT airportname FROM `" + config.couchbase.bucket + "` WHERE airportname LIKE '" + queryStr + "%'";
     }
 
-    db.query(queryPrep, function (err, res) {
+    db.query(queryPrep,user,function (err, res) {
         if (err) {
             done(err, null);
             return;
@@ -29,20 +29,3 @@ module.exports.findAll = function (queryStr, done) {
     });
 }
 
-/**
- *
- * @param queryStr
- * @param done
- */
-module.exports.findbycode = function (queryStr, done) {
-    db.query( "SELECT faa FROM `" + config.couchbase.bucket + "` WHERE airportname = '" + queryStr + "'", function (err, res) {
-        if (err) {
-            done(err, null);
-            return;
-        }
-        if (res) {
-            done(null, res);
-            return;
-        }
-    });
-}

@@ -8,6 +8,9 @@ var flightPath=require('../model/flightPath');
 var rawImport=require('../model/raw/rawImport');
 var auth=require('../model/auth.js');
 var user=require('../model/user.js');
+var jwt = require('jsonwebtoken');
+var config = require('./../config');
+var sec=config.application.hashToken;
 
 //// ▶▶ application/json parser ◀◀ ////
 var jsonParser = bodyParser.json();
@@ -27,7 +30,7 @@ module.exports = function (app) {
     //// ▶▶ airports ◀◀ ////
     app.get('/api/airport/findAll',function(req,res) {
         if (req.query.search) {
-            airport.findAll(req.query.search, function (err, done) {
+            airport.findAll(req.query.search, jwt.decode(req.query.token).user,function (err, done) {
                 if (err) {
                     res.status = 400;
                     res.send(err);
@@ -46,7 +49,7 @@ module.exports = function (app) {
     //// ▶▶ flightPath ◀◀ ////
     app.get('/api/flightPath/findAll',function(req,res){
         if(req.query.from && req.query.to && req.query.leave){
-            flightPath.findAll(req.query.from, req.query.to,req.query.leave, function (err, done) {
+            flightPath.findAll(req.query.from, req.query.to,req.query.leave,jwt.decode(req.query.token).user, function (err, done) {
                 if (err) {
                     res.status = 400;
                     res.send(err);
@@ -60,20 +63,6 @@ module.exports = function (app) {
             res.send({"flightPath":"bad request"});
             return;
         }
-    });
-
-    //// ▶▶ provision ◀◀ ////
-    app.post('/api/status/provisionCB',function(req,res){
-        rawImport.provisionCB(function(err,done){
-            if(err){
-                res.status=400;
-                res.send(err);
-                return;
-            }
-            res.status=202;
-            res.send(done);
-            return;
-        });
     });
 
     //// ▶▶ create login ◀◀ ////
@@ -123,6 +112,20 @@ module.exports = function (app) {
     //// ▶▶ booked flights ◀◀ ////
     app.get('/api/user/flights',urlencodedParser,function(req,res){
         auth.booked(req.query.token,function(err,done){
+            if(err){
+                res.status=400;
+                res.send(err);
+                return;
+            }
+            res.status=202;
+            res.send(done);
+            return;
+        });
+    });
+
+    //// ▶▶ provision ◀◀ ////
+    app.post('/api/status/provisionCB',function(req,res){
+        rawImport.provisionCB(function(err,done){
             if(err){
                 res.status=400;
                 res.send(err);

@@ -19,6 +19,7 @@
     <script src="js/angular-md5.min.js"></script>
     <script src="js/angular-cookies.min.js"></script>
     <script src="js/angular-jwt.min.js"></script>
+    <script src="js/faye-browser-min.js"></script>
     <script src="js/scripts.js"></script>
 </head>
 <body ng-app="testApp" ng-controller="flightController">
@@ -102,7 +103,13 @@
                                     <input type="checkbox" class="switch" checked/>
                                 </div>
                             </div>
-                            <div class="col-xs-7">
+                            <label id="showMeLabel" class="col-xs-3 control-label">NARRATION</label>
+                            <div class="col-xs-2">
+                                <div class="input-group">
+                                    <input type="checkbox" class="switchShowMe" checked/>
+                                </div>
+                            </div>
+                            <div class="col-xs-2">
                                 <button class="btn btn-primary pull-right btn-sm" type="submit"
                                         ng-disabled="travelForm.$invalid">Find
                                     Flights</button>
@@ -211,6 +218,10 @@
         </div>
     </div>
 </div>
-
+<div class="insFooter showMe">
+    <textarea class="form-control showMe" rows="4"id="textAreaShowMe">
+    </textarea>
+    <span class="label label-danger" style="margin-left: 5px">NARRATION :</span> <strong>{{fact}}</strong>
+</div>
 </body>
 </html>

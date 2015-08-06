@@ -10,13 +10,13 @@ var haversine = require('haversine');
  * @param ret
  * @param done
  */
-module.exports.findAll = function (from, to, leave, done) {
+module.exports.findAll = function (from, to, leave, user, done) {
     if (config.application.verbose) {
         console.log('↳ VERBOSE:FINDALLL:',{from:from,to:to,leave:leave},':REQ');
     }
     var queryPrep = "SELECT faa as fromAirport,geo FROM `" + config.couchbase.bucket + "` WHERE airportname = '" + from +
         "' UNION SELECT faa as toAirport,geo FROM `" + config.couchbase.bucket + "` WHERE airportname = '" + to + "'";
-    db.query(queryPrep, function (err, res) {
+    db.query(queryPrep, user, function (err, res) {
         if (err) {
             done(err, null);
             return;
@@ -51,7 +51,7 @@ module.exports.findAll = function (from, to, leave, done) {
             config.couchbase.bucket + "` a ON KEYS r.airlineid WHERE r.sourceairport='" + queryFrom +
             "' AND r.destinationairport='" + queryTo + "' AND s.day=" + convDate(leave) + " ORDER BY a.name";
 
-            db.query(queryPrep, function (err, flightPaths) {
+            db.query(queryPrep, user, function (err, flightPaths) {
                 if (err) {
                     done(err, null);
                     return;

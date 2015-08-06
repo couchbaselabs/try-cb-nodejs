@@ -13,6 +13,9 @@ var http=require('http');
 var request=require('request');
 var status="offline";  //offline,pending,online
 var ottoman = require('ottoman');
+var faye = require('faye');
+var client = new faye.Client('http://localhost:8000/faye');
+
 
 /**
  * 
@@ -184,22 +187,50 @@ function docDelete(key, done) {
     });
 }
 
-/**
- *
- * @param done
- */
 
 /**
  *
  * @param sql
+ * @param user
  * @param done
  */
-function query(sql,done){
+function query(sql,user,done){
+
+    // Init a channel
+    var channel;
+
+    // Check for only 2 parameters and if only 2 assign the callback correctly
+    //   Otherwise, assign channel to the username passed in for publishing using Faye
+    if(typeof done === "undefined"){
+        done=user;
+    }
+    else{
+        channel=user;
+    }
+
+    // Setup Query
     var N1qlQuery = couchbase.N1qlQuery;
+
+    // Check if configured to show queries in console, and also if set to publish
+    //   using Faye
     if(config.couchbase.showQuery){
         console.log("QUERY:",sql);
+        if(channel){
+            var publication = client.publish('/'+channel, {text: 'N1QL='+sql},function(err,pubres){
+                if(err){
+                    console.log("ERR:",err);
+                }
+                if(pubres){
+                    console.log("SUCCESS:",pubres);
+                }
+            });
+        }
     }
+
+    // Make a N1QL specific Query
     var query = N1qlQuery.fromString(sql);
+
+    // Issue Query
     db.query(query,function(err,result){
         if (err) {
             console.log("ERR:",err);
