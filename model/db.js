@@ -18,7 +18,7 @@ var client = new faye.Client('http://localhost:8000/faye');
 
 
 /**
- * 
+ *
  */
 function init(done) {
     console.log({init: "check"});
@@ -187,6 +187,15 @@ function docDelete(key, done) {
     });
 }
 
+function refreshExpiry(key, time, done) {
+    db.touch(key, time, function(err, result) {
+        if(err) {
+            return done(err, null);
+        }
+        done(null, true);
+    });
+}
+
 
 /**
  *
@@ -276,3 +285,4 @@ module.exports.ops=ops;
 module.exports.delete=docDelete;
 module.exports.read=read;
 module.exports.upsert=upsert;
+module.exports.refreshExpiry=refreshExpiry;

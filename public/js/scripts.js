@@ -162,7 +162,17 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
 
 
     //// ▶▶ Jquery inside Angular ◀◀ ////
-    $('.input-daterange').datepicker({"todayHighlight": true, "autoclose":true,"startDate":"+0d"});
+    $('.input-daterange').datepicker(
+        {
+            "todayHighlight": true,
+            "autoclose":true,
+            "startDate":"+0d"
+        }
+    ).on("changeDate", function(ev) {
+        var date = new Date(ev.date);
+        $("#textAreaShowMe").val("DATE SELECT≔" + (date.getMonth() + 1) + "-" + (date.getDate() + 1) + "-" + date.getFullYear() + "\n" + $("#textAreaShowMe").val());
+    });
+
     $("#textAreaShowMe").hide();
     $(".insFooter").hide();
 
@@ -212,5 +222,3 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
         }
     });
 });
-
-

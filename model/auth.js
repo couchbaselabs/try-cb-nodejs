@@ -1,4 +1,4 @@
-var db = require('./db.js');
+var db = require('./db');
 var jwt = require('jsonwebtoken');
 var config = require('./../config');
 var User = require('./user.js');
@@ -30,8 +30,13 @@ module.exports.createLogin = function (newUser,newPass,done) {
                             done(err,null);
                             return;
                         }
-                            done(null, {"success": userNew.token});
-                            return;
+                        db.refreshExpiry("$User$name|" + userNew.name, 14400, function(error, result) {
+                            db.refreshExpiry("User|" + userNew._id, 14400, function(error, result){});
+                            if(error) {
+                                return done(error, null);
+                            }
+                            return done(null, {"success": userNew.token});
+                        });
                     });
                 }
                 if(user.length>0){
@@ -140,4 +145,3 @@ module.exports.isLoggedIn = function(token,done) {
     });
     done(false);
 }
-
