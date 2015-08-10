@@ -170,8 +170,10 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
         }
     ).on("changeDate", function(ev) {
         var date = new Date(ev.date);
-        $("#textAreaShowMe").val("DATE SELECT≔" + (date.getMonth() + 1) + "-" + (date.getDate() + 1) + "-" + date.getFullYear() + "\n" + $("#textAreaShowMe").val());
-    });
+        $("#textAreaShowMe").val("DATE SELECTED≔" + (date.getMonth() + 1) + "-" + (date.getDate() + 1) + "-" + date.getFullYear() + "\n" + $("#textAreaShowMe").val());
+    }).on("show",function(sh){
+                  $scope.fact="Selecting DATE from DatePicker";
+              });
 
     $("#textAreaShowMe").hide();
     $(".insFooter").hide();
