@@ -26,6 +26,10 @@
     {
       "name": "Todd Greenstein",
       "email": "todd@couchbase.com"
+    },
+    {
+        "name": "Nic Raboy",
+        "email": "nic@couchbase.com"
     }
   ]
 }
