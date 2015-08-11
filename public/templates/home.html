@@ -61,7 +61,7 @@
                                         <div class="input-group">
                                             <span class="input-group-addon">Leave</span>
                                             <input type="text" class="input-sm form-control" name="start" id="leaveDate"
-                                                ng-model="leave" placeholder="enter a travel date" required />
+                                                ng-model="leave" placeholder="enter a travel date" />
                                             <span class="input-group-addon" id="retSpan">Return</span>
                                             <input type="text" class="input-sm form-control" id="retDate" name="end"
                                                 ng-model="ret" />
@@ -83,8 +83,9 @@
                                     </div>
                                 </div>
                                 <div class="col-xs-2">
-                                    <button class="btn btn-primary pull-right btn-sm" type="submit"
-                                        ng-disabled="travelForm.$invalid">
+                                    <button class="btn btn-primary pull-right btn-sm" type="button"
+                                        ng-disabled="travelForm.$invalid"
+                                        ng-click="findFlights(fromName, toName, leave)">
                                         Find Flights
                                     </button>
                                 </div>

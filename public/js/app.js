@@ -35,7 +35,6 @@ travelApp.run(function($rootScope, $state, $cookies) {
     if($cookies.get("user")) {
         var subscription = fayeClient.subscribe("/" + $cookies.get("user"), function(message) {
             $rootScope.publishMessage(message.text);
-            //$rootScope.textAreaShowMe = message.text + "\n" + ($rootScope.textAreaShowMe ? $rootScope.textAreaShowMe : "");
         });
         $state.go("home");
     } else {
@@ -48,7 +47,7 @@ travelApp.controller("LoginController", function($scope, $rootScope, $state, $ht
         $cookies.remove("token");
         $cookies.remove("user");
         var cookieExpiration = new Date();
-        cookieExpiration.setHours(cookieExpiration.getDate() + 4);
+        cookieExpiration.setHours(cookieExpiration.getHours() + 4);
         if(isNew === true) {
             $http.post("/api/user/login",
                 {
@@ -118,8 +117,54 @@ travelApp.controller("HomeController", function($scope, $rootScope, $state, $htt
             return response.data;
         });
     };
-    $scope.findFlights = function() {
-
+    $scope.findFlights = function(fromName, toName, departDate) {
+        $rootScope.fact = "Searching for flights using REST call: /api/flightPath/findAll";
+        $scope.empty = true;
+        $scope.rowCollectionLeave = [];
+        $scope.rowCollectionRet = [];
+        console.log(fromName + " ## " + toName + " ## " + $scope.departDate);
+        $rootScope.publishMessage("REST REQ=/api/flightPath/findAll");
+        $http.get("/api/flightPath/findAll",
+            {
+                params: {
+                    from: fromName,
+                    to: toName,
+                    leave: $scope.departDate,
+                    token:$cookies.get('token')
+                }
+            }
+        )
+        .then(function (response) {
+            console.log("RESPONSE -> " + JSON.stringify(response));
+            if (response.data.length > 0) {
+                $scope.empty = false;
+            }
+            for (var j = 0; j < response.data.length; j++) {
+                var d= new Date(Date.parse($scope.departDate + " " + response.data[j].utc));
+                d.setHours(d.getHours()+response.data[j].flighttime);
+                response.data[j].utcland = d.getHours() + ":" + d.getMinutes() + ":00";
+                $scope.rowCollectionLeave.push(response.data[j]);
+            }
+        }, function(error) {
+            console.log(JSON.stringify(error));
+        });
+        if (this.ret) {
+            $rootScope.sendMessage("REST REQ=/api/flightPath/findAll");
+            $scope.ret=this.ret;
+            $http.get("/api/flightPath/findAll", {
+                params: {from: this.toName, to: this.fromName, leave: this.ret,token:$cookies.get('token')}
+            }).then(function (responseRet) {
+                if (responseRet.data.length > 0) {
+                    $scope.retEmpty = false;
+                }
+                for (var j = 0; j < responseRet.data.length; j++) {
+                    var d= new Date(Date.parse($scope.ret + " " + responseRet.data[j].utc));
+                    d.setHours(d.getHours()+responseRet.data[j].flighttime);
+                    responseRet.data[j].utcland = d.getHours() + ":" + d.getMinutes() + ":00";
+                    $scope.rowCollectionRet.push(responseRet.data[j]);
+                }
+            });
+        }
     };
     $scope.findBookedFlights = function() {
 
@@ -145,6 +190,7 @@ travelApp.controller("HomeController", function($scope, $rootScope, $state, $htt
         }
     ).on("changeDate", function(ev) {
         var date = new Date(ev.date);
+        $scope.departDate = ev.date;
         $("#textAreaShowMe").val("DATE SELECTED≔" + (date.getMonth() + 1) + "-" + date.getDate() + "-" + date.getFullYear() + "\n" + $("#textAreaShowMe").val());
     }).on("show",function(sh){
         $rootScope.fact="Selecting DATE from DatePicker";
@@ -153,7 +199,7 @@ travelApp.controller("HomeController", function($scope, $rootScope, $state, $htt
     $("input.switch").bootstrapSwitch({
                                           onText: '⇄',
                                           offText: '→',
-                                          size: 'mini',
+                                          size: 'small',
                                           state: true
                                       });
     $("input.switch").on('switchChange.bootstrapSwitch', function (event, state) {
@@ -174,11 +220,16 @@ travelApp.controller("HomeController", function($scope, $rootScope, $state, $htt
         }
     });
     $("input.switchShowMe").bootstrapSwitch({
-                                          onText: '⚆',
-                                          offText: '⚡',
-                                          size: 'mini',
+                                          onText: 'on',
+                                          offText: 'off',
+                                          size: 'small',
                                           state: true
                                             });
+
+    $("input.switchShowMe").on('switchChange.bootstrapSwitch', function(event, state) {
+        $rootScope.showCode = state;
+        $rootScope.$apply();
+    });
 });
 
 travelApp.controller('flightController',function($scope, $state,$http,$window,ngCart,md5,$cookies,jwtHelper){
