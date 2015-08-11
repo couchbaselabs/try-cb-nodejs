@@ -31,7 +31,7 @@ module.exports.createLogin = function (newUser,newPass,done) {
                             return;
                         }
                         db.refreshExpiry("$User$name|" + userNew.name, 14400, function(error, result) {
-                            db.refreshExpiry("User|" + userNew._id, 14400, function(error, result){});
+                            db.refreshExpiry("User|" + userNew._id, 14400, function(error, result) {});
                             if(error) {
                                 return done(error, null);
                             }

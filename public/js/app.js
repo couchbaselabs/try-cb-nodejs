@@ -1,4 +1,5 @@
 var travelApp = angular.module("travelapp", ["ui.router", 'ui.bootstrap','ngCart','angular-md5','ngCookies','angular-jwt']);
+var fayeClient = null;
 
 /*
  * AngularJS Config Method
@@ -17,7 +18,6 @@ travelApp.config(function($stateProvider, $urlRouterProvider) {
             templateUrl: "templates/login.html",
             controller: "LoginController"
         });
-    $urlRouterProvider.otherwise("/login");
 });
 
 /*
@@ -26,17 +26,29 @@ travelApp.config(function($stateProvider, $urlRouterProvider) {
  * All global initialization happens in this method.  It is run only once when the application is first
  * loaded
  */
-travelApp.run(function($rootScope, $window, $cookieStore) {
-    var client = new Faye.Client("http://" + $window.location.hostname + ":8000" + "/faye");
-    var subscription = client.subscribe("/" + $cookieStore.get("user"), function(message) {
-        $rootScope.textAreaShowMe = message.text + "\n" + ($rootScope.textAreaShowMe ? $rootScope.textAreaShowMe : "");
-    });
+travelApp.run(function($rootScope, $state, $cookies) {
+    $rootScope.showCode = true;
+    $rootScope.publishMessage = function(message) {
+        $rootScope.textAreaShowMe = message + "\n" + ($rootScope.textAreaShowMe ? $rootScope.textAreaShowMe : "");
+    };
+    fayeClient = new Faye.Client("http://" + window.location.hostname + ":8000" + "/faye");
+    if($cookies.get("user")) {
+        var subscription = fayeClient.subscribe("/" + $cookies.get("user"), function(message) {
+            $rootScope.publishMessage(message.text);
+            //$rootScope.textAreaShowMe = message.text + "\n" + ($rootScope.textAreaShowMe ? $rootScope.textAreaShowMe : "");
+        });
+        $state.go("home");
+    } else {
+        $state.go("login");
+    }
 });
 
-travelApp.controller("LoginController", function($scope, $state, $http, md5, $cookieStore, jwtHelper) {
+travelApp.controller("LoginController", function($scope, $rootScope, $state, $http, md5, $cookies, jwtHelper) {
     $scope.login = function(username, password, isNew) {
-        $cookieStore.remove('token');
-        $cookieStore.remove('user');
+        $cookies.remove("token");
+        $cookies.remove("user");
+        var cookieExpiration = new Date();
+        cookieExpiration.setHours(cookieExpiration.getDate() + 4);
         if(isNew === true) {
             $http.post("/api/user/login",
                 {
@@ -47,8 +59,12 @@ travelApp.controller("LoginController", function($scope, $state, $http, md5, $co
             .then(function(response) {
                 if(response.data.success) {
                     $scope.formData.error = null;
-                    $cookieStore.put('token',response.data.success);
-                    $cookieStore.put('user',jwtHelper.decodeToken(response.data.success).user);
+                    $cookies.put('token',response.data.success, {"expires": cookieExpiration});
+                    $cookies.put('user',jwtHelper.decodeToken(response.data.success).user, {"expires": cookieExpiration});
+                    var subscription = fayeClient.subscribe("/" + $cookies.get("user"), function(message) {
+                        $rootScope.publishMessage(message.text);
+                    });
+                    $rootScope.publishMessage("REST REQ=/api/user/login");
                     $state.go("home");
                 }
                 if(response.data.failure) {
@@ -69,8 +85,11 @@ travelApp.controller("LoginController", function($scope, $state, $http, md5, $co
             .then(function(response) {
                 if(response.data.success){
                     $scope.formData.error=null;
-                    $cookieStore.put('token',response.data.success);
-                    $cookieStore.put('user',jwtHelper.decodeToken(response.data.success).user)
+                    $cookies.put('token',response.data.success, {"expires": cookieExpiration});
+                    $cookies.put('user',jwtHelper.decodeToken(response.data.success).user, {"expires": cookieExpiration});
+                    var subscription = fayeClient.subscribe("/" + $cookies.get("user"), function(message) {
+                        $rootScope.publishMessage(message.text);
+                    });
                     $state.go("home");
                 }
                 if(response.data.failure) {
@@ -83,16 +102,15 @@ travelApp.controller("LoginController", function($scope, $state, $http, md5, $co
     }
 });
 
-travelApp.controller("HomeController", function($scope, $rootScope, $state, $http, $cookieStore, $window) {
-    $scope.showCode=true;
+travelApp.controller("HomeController", function($scope, $rootScope, $state, $http, $cookies, $window) {
     $scope.findAirports = function(val) {
-        $scope.fact="Typeahead bound to REST call: /api/airport/findAll";
-        $scope.publishDebug("/api/airport/findAll");
+        $rootScope.fact="Typeahead bound to REST call: /api/airport/findAll";
+        $rootScope.publishMessage("REST REQ=/api/airport/findAll");
         return $http.get("/api/airport/findAll",
             {
                 params: {
-                    search:val,
-                    token:$cookieStore.get('token')
+                    search: val,
+                    token: $cookies.get('token')
                 }
             }
         )
@@ -118,38 +136,54 @@ travelApp.controller("HomeController", function($scope, $rootScope, $state, $htt
     $scope.selectRowRet = function(row) {
 
     };
-    $scope.publishDebug = function(req) {
-        $rootScope.textAreaShowMe = "REST REQ=" + req + "\n" + ($rootScope.textAreaShowMe ? $rootScope.textAreaShowMe : "");
-        /*if($scope.showCode){
-            $("#textAreaShowMe").val("REST REQ≔"+req + "\n" + $("#textAreaShowMe").val());
-        }*/
-    };
+
+    $('.input-daterange').datepicker(
+        {
+            "todayHighlight": true,
+            "autoclose":true,
+            "startDate":"+0d"
+        }
+    ).on("changeDate", function(ev) {
+        var date = new Date(ev.date);
+        $("#textAreaShowMe").val("DATE SELECTED≔" + (date.getMonth() + 1) + "-" + date.getDate() + "-" + date.getFullYear() + "\n" + $("#textAreaShowMe").val());
+    }).on("show",function(sh){
+        $rootScope.fact="Selecting DATE from DatePicker";
+    });
+
+    $("input.switch").bootstrapSwitch({
+                                          onText: '⇄',
+                                          offText: '→',
+                                          size: 'mini',
+                                          state: true
+                                      });
+    $("input.switch").on('switchChange.bootstrapSwitch', function (event, state) {
+        if(!state){
+            $scope.fact="Changing to ONE WAY";
+            $("#retDate").hide();
+            $("#retSpan").hide();
+            $("#retLabel").html("ONE WAY");
+            $scope.retEmpty=true;
+            $scope.$apply();
+        }else{
+            $scope.fact="Changing to ROUND TRIP";
+            $("#retDate").show();
+            $("#retSpan").show();
+            $("#retLabel").html("ROUND TRIP");
+            $scope.retEmpty=false;
+            $scope.$apply();
+        }
+    });
     $("input.switchShowMe").bootstrapSwitch({
                                           onText: '⚆',
                                           offText: '⚡',
                                           size: 'mini',
                                           state: true
                                             });
-    $("input.switchShowMe").on('switchChange.bootstrapSwitch', function (event, state) {
-        if (!state) {
-            $scope.showCode=true;
-            $("#textAreaShowMe").show();
-            $(".insFooter").show();
-            var client = new Faye.Client("http://"+ $window.location.hostname + ":8000"+"/faye");
-            var subscription = client.subscribe('/'+$cookieStore.get('user'), function(message) {
-                $("#textAreaShowMe").val(message.text + "\n" + $("#textAreaShowMe").val());
-            });
-        } else {
-            $scope.showCode=false;
-            $("#textAreaShowMe").hide();
-            $(".insFooter").hide();
-        }
-    });
 });
 
-travelApp.controller('flightController',function($scope, $state,$http,$window,ngCart,md5,$cookieStore,jwtHelper){
+travelApp.controller('flightController',function($scope, $state,$http,$window,ngCart,md5,$cookies,jwtHelper){
     $scope.formData = {h2:"Please Take a Moment to Create an Account"};
-    $scope.showCode=false;
+    //$scope.showCode=false;
     $scope.empty=true;
     $scope.cart=false;
     $scope.retEmpty=true;
@@ -164,7 +198,7 @@ travelApp.controller('flightController',function($scope, $state,$http,$window,ng
         $scope.fact="Typeahead bound to REST call: /api/airport/findAll";
         $scope.publishDebug("/api/airport/findAll");
         return $http.get("/api/airport/findAll",{
-            params:{search:val,token:$cookieStore.get('token')}
+            params:{search:val,token:$cookies.get('token')}
         }).then(function(response){
             return response.data;
         });
@@ -177,7 +211,7 @@ travelApp.controller('flightController',function($scope, $state,$http,$window,ng
         $scope.leave=this.leave;
         $scope.publishDebug("/api/flightPath/findAll");
         $http.get("/api/flightPath/findAll", {
-            params: {from: this.fromName, to: this.toName, leave: this.leave,token:$cookieStore.get('token')}
+            params: {from: this.fromName, to: this.toName, leave: this.leave,token:$cookies.get('token')}
         }).then(function (response) {
             if (response.data.length > 0) {
                 $scope.empty = false;
@@ -193,7 +227,7 @@ travelApp.controller('flightController',function($scope, $state,$http,$window,ng
             $scope.publishDebug("/api/flightPath/findAll");
             $scope.ret=this.ret;
             $http.get("/api/flightPath/findAll", {
-                params: {from: this.toName, to: this.fromName, leave: this.ret,token:$cookieStore.get('token')}
+                params: {from: this.toName, to: this.fromName, leave: this.ret,token:$cookies.get('token')}
             }).then(function (responseRet) {
                 if (responseRet.data.length > 0) {
                     $scope.retEmpty = false;
@@ -210,7 +244,7 @@ travelApp.controller('flightController',function($scope, $state,$http,$window,ng
 
     $scope.findBookedFlights = function(){
         $http.get("/api/user/flights",{
-            params:{token:$cookieStore.get('token')}
+            params:{token:$cookies.get('token')}
         }).then(function(responseFlights){
             if (responseFlights.data.length > 0) {
                 $scope.fliEmpty = false;
@@ -266,72 +300,6 @@ travelApp.controller('flightController',function($scope, $state,$http,$window,ng
     }
 
     $scope.publishDebug=function(req){
-        if($scope.showCode){
-            $("#textAreaShowMe").val("REST REQ≔"+req + "\n" + $("#textAreaShowMe").val());
-        }
+        $("#textAreaShowMe").val("REST REQ≔"+req + "\n" + $("#textAreaShowMe").val());
     }
-
-
-    //// ▶▶ Jquery inside Angular ◀◀ ////
-    $('.input-daterange').datepicker(
-        {
-            "todayHighlight": true,
-            "autoclose":true,
-            "startDate":"+0d"
-        }
-    ).on("changeDate", function(ev) {
-        var date = new Date(ev.date);
-        $("#textAreaShowMe").val("DATE SELECTED≔" + (date.getMonth() + 1) + "-" + date.getDate() + "-" + date.getFullYear() + "\n" + $("#textAreaShowMe").val());
-    }).on("show",function(sh){
-        $scope.fact="Selecting DATE from DatePicker";
-    });
-
-    $("#textAreaShowMe").hide();
-    $(".insFooter").hide();
-
-    $("input.switch").bootstrapSwitch({
-                                          onText: '⇄',
-                                          offText: '→',
-                                          size: 'mini',
-                                          state: true
-                                      });
-    $("input.switch").on('switchChange.bootstrapSwitch', function (event, state) {
-        if(!state){
-            $scope.fact="Changing to ONE WAY";
-            $("#retDate").hide();
-            $("#retSpan").hide();
-            $("#retLabel").html("ONE WAY");
-            $scope.retEmpty=true;
-            $scope.$apply();
-        }else{
-            $scope.fact="Changing to ROUND TRIP";
-            $("#retDate").show();
-            $("#retSpan").show();
-            $("#retLabel").html("ROUND TRIP");
-            $scope.retEmpty=false;
-            $scope.$apply();
-        }
-    });
-
-    $("input.switchShowMe").bootstrapSwitch({
-                                          onText: '⚆',
-                                          offText: '⚡',
-                                          size: 'mini',
-                                          state: true
-                                            });
-    $("input.switchShowMe").on('switchChange.bootstrapSwitch', function (event, state) {
-        if (!state) {
-            $scope.showCode=true;
-            $("#textAreaShowMe").show();
-            $(".insFooter").show();
-            var client = new Faye.Client("http://"+ $window.location.hostname + ":8000"+"/faye");
-            var subscription = client.subscribe('/'+$cookieStore.get('user'), function(message) {
-                $("#textAreaShowMe").val(message.text + "\n" + $("#textAreaShowMe").val());
-            });
-        } else {
-            $scope.showCode=false;
-            $("#textAreaShowMe").hide();
-            $(".insFooter").hide();
-        }
-    });
 });

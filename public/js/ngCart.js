@@ -373,7 +373,7 @@ angular.module('ngCart.directives', ['ngCart.fulfilment'])
         };
     }])
 
-    .directive('ngcartCart', ['$http','$cookieStore','$rootScope', function($http,$cookieStore,$rootScope){
+    .directive('ngcartCart', ['$http','$cookies','$rootScope', function($http,$cookies,$rootScope){
         return {
             restrict: 'E',
             controller: 'CartController',
@@ -383,7 +383,7 @@ angular.module('ngCart.directives', ['ngCart.fulfilment'])
             link: function (scope, element, attrs) {
                 scope.book = function () {
                     $http.post('/api/user/flights', {
-                        token: $cookieStore.get('token'),
+                        token: $cookies.get('token'),
                         flights: this.ngCart.getItems()
                     })
                         .then(function (response) {
@@ -397,7 +397,7 @@ angular.module('ngCart.directives', ['ngCart.fulfilment'])
         };
     }])
 
-    .directive('ngcartSummary', ['$location','$window','$cookieStore',function(location,window,$cookieStore){
+    .directive('ngcartSummary', ['$location','$window','$cookies',function(location,window,$cookies){
         return {
             restrict : 'AEC',
             controller : 'CartController',
@@ -417,15 +417,16 @@ angular.module('ngCart.directives', ['ngCart.fulfilment'])
                     return false;
                 },
                     scope.logout=function(){
-
+                        $cookies.remove("user");
+                        $cookies.remove("token");
                     },
                     scope.getUser=function(){
-                        if($cookieStore.get('user')===undefined){
+                        if($cookies.get('user')===undefined){
                             scope.ngCart.empty();
                             window.location.href="http://" + window.location.host + "/index1.html#/login";
                             return;
                         }
-                        return $cookieStore.get('user');
+                        return $cookies.get('user');
                     }
             }
         };

@@ -196,6 +196,20 @@ function refreshExpiry(key, time, done) {
     });
 }
 
+function sendMessage(channel, message) {
+    if(config.couchbase.showQuery){
+        if(channel){
+            var publication = client.publish('/'+channel, {text: message},function(err,pubres){
+                if(err){
+                    console.log("ERR:",err);
+                }
+                if(pubres){
+                    console.log("SUCCESS:",pubres);
+                }
+            });
+        }
+    }
+}
 
 /**
  *
@@ -286,3 +300,4 @@ module.exports.delete=docDelete;
 module.exports.read=read;
 module.exports.upsert=upsert;
 module.exports.refreshExpiry=refreshExpiry;
+module.exports.sendMessage=sendMessage;

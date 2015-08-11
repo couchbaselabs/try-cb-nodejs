@@ -25,7 +25,7 @@
     <body ng-app="travelapp">
         testing
         <div ui-view></div>
-        <div class="insFooter showMe">
+        <div class="insFooter showMe" ng-show="showCode">
             <textarea class="form-control showMe" rows="4" id="textAreaShowMe" ng-model="textAreaShowMe">
             </textarea>
             <span class="label label-danger" style="margin-left: 5px">NARRATION :</span> <strong>{{fact}}</strong>
