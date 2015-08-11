@@ -1,7 +1,153 @@
+var travelApp = angular.module("travelapp", ["ui.router", 'ui.bootstrap','ngCart','angular-md5','ngCookies','angular-jwt']);
 
-//// ▶▶ Angular ◀◀ ////
-var testapp = angular.module('testApp',['ui.bootstrap','ngCart','angular-md5','ngCookies','angular-jwt']);
-testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$cookieStore,jwtHelper){
+/*
+ * AngularJS Config Method
+ *
+ * All configuration happens here.  Usually routes and or language (i18n, l10n) goes here
+ */
+travelApp.config(function($stateProvider, $urlRouterProvider) {
+    $stateProvider
+        .state("home", {
+            url: "/home",
+            templateUrl: "templates/home.html",
+            controller: "HomeController"
+        })
+        .state("login", {
+            url: "/login",
+            templateUrl: "templates/login.html",
+            controller: "LoginController"
+        });
+    $urlRouterProvider.otherwise("/login");
+});
+
+/*
+ * AngularJS Run Method
+ *
+ * All global initialization happens in this method.  It is run only once when the application is first
+ * loaded
+ */
+travelApp.run(function($rootScope, $window, $cookieStore) {
+    var client = new Faye.Client("http://" + $window.location.hostname + ":8000" + "/faye");
+    var subscription = client.subscribe("/" + $cookieStore.get("user"), function(message) {
+        $rootScope.textAreaShowMe = message.text + "\n" + ($rootScope.textAreaShowMe ? $rootScope.textAreaShowMe : "");
+    });
+});
+
+travelApp.controller("LoginController", function($scope, $state, $http, md5, $cookieStore, jwtHelper) {
+    $scope.login = function(username, password, isNew) {
+        $cookieStore.remove('token');
+        $cookieStore.remove('user');
+        if(isNew === true) {
+            $http.post("/api/user/login",
+                {
+                    user: username,
+                    password:md5.createHash(password)
+                }
+            )
+            .then(function(response) {
+                if(response.data.success) {
+                    $scope.formData.error = null;
+                    $cookieStore.put('token',response.data.success);
+                    $cookieStore.put('user',jwtHelper.decodeToken(response.data.success).user);
+                    $state.go("home");
+                }
+                if(response.data.failure) {
+                    $scope.formData.error = response.data.failure;
+                }
+            }, function(error) {
+                console.log(JSON.stringify(error));
+            });
+        } else {
+            $http.get("/api/user/login",
+                {
+                    params: {
+                        user:username,
+                        password:md5.createHash(password)
+                    }
+                }
+            )
+            .then(function(response) {
+                if(response.data.success){
+                    $scope.formData.error=null;
+                    $cookieStore.put('token',response.data.success);
+                    $cookieStore.put('user',jwtHelper.decodeToken(response.data.success).user)
+                    $state.go("home");
+                }
+                if(response.data.failure) {
+                    $scope.formData.error = response.data.failure;
+                }
+            }, function(error) {
+                console.log(JSON.stringify(error));
+            });
+        }
+    }
+});
+
+travelApp.controller("HomeController", function($scope, $rootScope, $state, $http, $cookieStore, $window) {
+    $scope.showCode=true;
+    $scope.findAirports = function(val) {
+        $scope.fact="Typeahead bound to REST call: /api/airport/findAll";
+        $scope.publishDebug("/api/airport/findAll");
+        return $http.get("/api/airport/findAll",
+            {
+                params: {
+                    search:val,
+                    token:$cookieStore.get('token')
+                }
+            }
+        )
+        .then(function(response) {
+            return response.data;
+        });
+    };
+    $scope.findFlights = function() {
+
+    };
+    $scope.findBookedFlights = function() {
+
+    };
+    $scope.removeRow = function(row) {
+
+    };
+    $scope.selectRow = function(row) {
+
+    };
+    $scope.removeRowRet = function(row) {
+
+    };
+    $scope.selectRowRet = function(row) {
+
+    };
+    $scope.publishDebug = function(req) {
+        $rootScope.textAreaShowMe = "REST REQ=" + req + "\n" + ($rootScope.textAreaShowMe ? $rootScope.textAreaShowMe : "");
+        /*if($scope.showCode){
+            $("#textAreaShowMe").val("REST REQ≔"+req + "\n" + $("#textAreaShowMe").val());
+        }*/
+    };
+    $("input.switchShowMe").bootstrapSwitch({
+                                          onText: '⚆',
+                                          offText: '⚡',
+                                          size: 'mini',
+                                          state: true
+                                            });
+    $("input.switchShowMe").on('switchChange.bootstrapSwitch', function (event, state) {
+        if (!state) {
+            $scope.showCode=true;
+            $("#textAreaShowMe").show();
+            $(".insFooter").show();
+            var client = new Faye.Client("http://"+ $window.location.hostname + ":8000"+"/faye");
+            var subscription = client.subscribe('/'+$cookieStore.get('user'), function(message) {
+                $("#textAreaShowMe").val(message.text + "\n" + $("#textAreaShowMe").val());
+            });
+        } else {
+            $scope.showCode=false;
+            $("#textAreaShowMe").hide();
+            $(".insFooter").hide();
+        }
+    });
+});
+
+travelApp.controller('flightController',function($scope, $state,$http,$window,ngCart,md5,$cookieStore,jwtHelper){
     $scope.formData = {h2:"Please Take a Moment to Create an Account"};
     $scope.showCode=false;
     $scope.empty=true;
@@ -14,41 +160,6 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
     $scope.rowCollectionLeave=[];
     $scope.rowCollectionRet=[];
     $scope.rowCollectionFlight=[];
-    $scope.login = function(){
-        var curUser=this.formData.username;
-        $cookieStore.remove('token');
-        $cookieStore.remove('user');
-        if(this.formData.h2.indexOf("Create")!=-1){
-            $http.post("/api/user/login",{user:curUser,
-                password:md5.createHash(this.formData.password)})
-                .then(function(response){
-                                     if(response.data.success){
-                                         $scope.formData.error=null;
-                                         $cookieStore.put('token',response.data.success);
-                                         $cookieStore.put('user',jwtHelper.decodeToken(response.data.success).user);
-                                         $window.location.href="http://" + $window.location.host + "/index.html";
-                                     }
-                                      if(response.data.failure) {
-                                          $scope.formData.error = response.data.failure;
-                                      }
-                                  });
-        }else{
-            $http.get("/api/user/login", {
-                params:{user:this.formData.username,
-                    password:md5.createHash(this.formData.password)}})
-                .then(function(response){
-                                      if(response.data.success){
-                                          $scope.formData.error=null;
-                                          $cookieStore.put('token',response.data.success);
-                                          $cookieStore.put('user',jwtHelper.decodeToken(response.data.success).user)
-                                          $window.location.href="http://" + $window.location.host + "/index.html";
-                                      }
-                                      if(response.data.failure) {
-                                          $scope.formData.error = response.data.failure;
-                                      }
-                                  });
-            }
-        }
     $scope.findAirports=function(val){
         $scope.fact="Typeahead bound to REST call: /api/airport/findAll";
         $scope.publishDebug("/api/airport/findAll");

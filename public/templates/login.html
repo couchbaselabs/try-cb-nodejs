@@ -1,0 +1,30 @@
+<style>
+    body {
+        padding-top: 40px;
+        padding-bottom: 40px;
+        background-color: #eee;
+    }
+    .form-signin {
+        max-width: 330px;
+        padding: 5px;
+        margin: 0 auto;
+    }
+</style>
+<div class="container">
+    <form role="form" class="form-signin" name="loginForm" novalidate>
+        <div class="row">
+            <div class="col-xs-12">
+                <img src="/images/CBTravel.LOGO.png">
+            </div>
+        </div>
+        <h3 class="form-signin-heading" ng-show="isNew == true">Please Take a Moment to Create an Account</h3>
+        <h3 class="form-signin-heading" ng-show="isNew == false">Please Enter Your Username and Password</h3>
+        <div class="alert alert-warning" role="alert" ng-show="formData.error">{{formData.error}}</div>
+        <input type="text" placeholder="Please Enter Your Email Address" required name="username" ng-model="username" ng-change="formData.error=null" class="form-control"/>
+        <input type="password" placeholder="Enter a password" required="" name="password" ng-model="password" ng-change="formData.error=null" class="form-control"/>
+        <label class="checkbox">
+            <input type="checkbox" ng-checked="true" name="isNew" ng-model="isNew" ng-init="isNew=true" />New User
+        </label>
+        <button type="button" class="btn btn-lg btn-primary btn-block" ng-disabled="loginForm.$invalid" ng-click="login(username, password, isNew)">Sign in</button>
+    </form>
+</div>

@@ -148,7 +148,7 @@ angular.module('ngCart', ['ngCart.directives'])
         };
 
         this.empty = function () {
-            
+
             $rootScope.$broadcast('ngCart:change', {});
             this.$cart.items = [];
             localStorage.removeItem('cart');
@@ -422,7 +422,7 @@ angular.module('ngCart.directives', ['ngCart.fulfilment'])
                     scope.getUser=function(){
                         if($cookieStore.get('user')===undefined){
                             scope.ngCart.empty();
-                            window.location.href="http://" + window.location.host + "/login.html";
+                            window.location.href="http://" + window.location.host + "/index1.html#/login";
                             return;
                         }
                         return $cookieStore.get('user');
