@@ -48,6 +48,7 @@ travelApp.controller("LoginController", function($scope, $rootScope, $state, $ht
         $cookies.remove("user");
         var cookieExpiration = new Date();
         cookieExpiration.setHours(cookieExpiration.getHours() + 4);
+        $rootScope.publishMessage("REST REQ=/api/user/login");
         if(isNew === true) {
             $http.post("/api/user/login",
                 {
@@ -63,7 +64,6 @@ travelApp.controller("LoginController", function($scope, $rootScope, $state, $ht
                     var subscription = fayeClient.subscribe("/" + $cookies.get("user"), function(message) {
                         $rootScope.publishMessage(message.text);
                     });
-                    $rootScope.publishMessage("REST REQ=/api/user/login");
                     $state.go("home");
                 }
                 if(response.data.failure) {
@@ -102,6 +102,9 @@ travelApp.controller("LoginController", function($scope, $rootScope, $state, $ht
 });
 
 travelApp.controller("HomeController", function($scope, $rootScope, $state, $http, $cookies, $window) {
+
+    $scope.empty = true;
+
     $scope.findAirports = function(val) {
         $rootScope.fact="Typeahead bound to REST call: /api/airport/findAll";
         $rootScope.publishMessage("REST REQ=/api/airport/findAll");
@@ -119,10 +122,10 @@ travelApp.controller("HomeController", function($scope, $rootScope, $state, $htt
     };
     $scope.findFlights = function(fromName, toName, departDate) {
         $rootScope.fact = "Searching for flights using REST call: /api/flightPath/findAll";
-        $scope.empty = true;
         $scope.rowCollectionLeave = [];
         $scope.rowCollectionRet = [];
-        console.log(fromName + " ## " + toName + " ## " + $scope.departDate);
+        $scope.departDate = $("#leaveDate").val();
+        $scope.returnDate = $("#retDate").val();
         $rootScope.publishMessage("REST REQ=/api/flightPath/findAll");
         $http.get("/api/flightPath/findAll",
             {
@@ -134,8 +137,7 @@ travelApp.controller("HomeController", function($scope, $rootScope, $state, $htt
                 }
             }
         )
-        .then(function (response) {
-            console.log("RESPONSE -> " + JSON.stringify(response));
+        .then(function(response) {
             if (response.data.length > 0) {
                 $scope.empty = false;
             }
@@ -148,12 +150,19 @@ travelApp.controller("HomeController", function($scope, $rootScope, $state, $htt
         }, function(error) {
             console.log(JSON.stringify(error));
         });
-        if (this.ret) {
-            $rootScope.sendMessage("REST REQ=/api/flightPath/findAll");
-            $scope.ret=this.ret;
-            $http.get("/api/flightPath/findAll", {
-                params: {from: this.toName, to: this.fromName, leave: this.ret,token:$cookies.get('token')}
-            }).then(function (responseRet) {
+        if($scope.returnDate) {
+            $rootScope.publishMessage("REST REQ=/api/flightPath/findAll");
+            $http.get("/api/flightPath/findAll",
+                {
+                    params: {
+                        from: toName,
+                        to: fromName,
+                        leave: $scope.returnDate,
+                        token:$cookies.get('token')
+                    }
+                }
+            )
+            .then(function(responseRet) {
                 if (responseRet.data.length > 0) {
                     $scope.retEmpty = false;
                 }
@@ -163,6 +172,8 @@ travelApp.controller("HomeController", function($scope, $rootScope, $state, $htt
                     responseRet.data[j].utcland = d.getHours() + ":" + d.getMinutes() + ":00";
                     $scope.rowCollectionRet.push(responseRet.data[j]);
                 }
+            }, function(error) {
+                console.log(JSON.stringify(error));
             });
         }
     };
