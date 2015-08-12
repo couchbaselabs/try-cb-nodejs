@@ -57,8 +57,8 @@ travelApp.controller("LoginController", function($scope, $rootScope, $state, $ht
         $cookies.remove("user");
         var cookieExpiration = new Date();
         cookieExpiration.setHours(cookieExpiration.getHours() + 4);
-        $rootScope.publishMessage("REST REQ=/api/user/login");
         if(isNew === true) {
+            $rootScope.fact = "REST POST=/api/user/login";
             $http.post("/api/user/login",
                 {
                     user: username,
@@ -82,6 +82,7 @@ travelApp.controller("LoginController", function($scope, $rootScope, $state, $ht
                 console.log(JSON.stringify(error));
             });
         } else {
+            $rootScope.fact = "REST REQ=/api/user/login";
             $http.get("/api/user/login",
                 {
                     params: {
@@ -107,6 +108,9 @@ travelApp.controller("LoginController", function($scope, $rootScope, $state, $ht
                 console.log(JSON.stringify(error));
             });
         }
+    }
+    $scope.toggleDebug = function() {
+        $rootScope.showCode = !$rootScope.showCode;
     }
 });
 
@@ -287,7 +291,7 @@ travelApp.controller("UserController", function($rootScope, $scope, $http, $cook
     $scope.rowCollectionFlight=[];
 
     $scope.findBookedFlights = function() {
-        $rootScope.publishMessage("REST REQ=/api/user/flights");
+        $rootScope.fact = "REST REQ=/api/user/flights";
         $http.get("/api/user/flights",
             {
                 params: {

@@ -382,7 +382,7 @@ angular.module('ngCart.directives', ['ngCart.fulfilment'])
             templateUrl: 'template/ngCart/cart.html',
             link: function (scope, element, attrs) {
                 scope.book = function () {
-                    $rootScope.publishMessage("REST REQ=/api/user/flights");
+                    $rootScope.fact = "REST REQ=/api/user/flights";
                     $http.post('/api/user/flights', {
                         token: $cookies.get('token'),
                         flights: this.ngCart.getItems()
@@ -424,7 +424,7 @@ angular.module('ngCart.directives', ['ngCart.fulfilment'])
                     scope.getUser=function(){
                         if($cookies.get('user')===undefined){
                             scope.ngCart.empty();
-                            window.location.href="http://" + window.location.host + "/index1.html#/login";
+                            window.location.href="http://" + window.location.host + "/#/login";
                             return;
                         }
                         return $cookies.get('user');
