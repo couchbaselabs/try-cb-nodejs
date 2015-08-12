@@ -382,6 +382,7 @@ angular.module('ngCart.directives', ['ngCart.fulfilment'])
             templateUrl: 'template/ngCart/cart.html',
             link: function (scope, element, attrs) {
                 scope.book = function () {
+                    $rootScope.publishMessage("REST REQ=/api/user/flights");
                     $http.post('/api/user/flights', {
                         token: $cookies.get('token'),
                         flights: this.ngCart.getItems()

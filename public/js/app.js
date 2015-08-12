@@ -17,6 +17,15 @@ travelApp.config(function($stateProvider, $urlRouterProvider) {
             url: "/login",
             templateUrl: "templates/login.html",
             controller: "LoginController"
+        })
+        .state("cart", {
+            url: "/cart",
+            templateUrl: "templates/cart.html"
+        })
+        .state("user", {
+            url: "/user",
+            templateUrl: "templates/user.html",
+            controller: "UserController"
         });
 });
 
@@ -101,7 +110,7 @@ travelApp.controller("LoginController", function($scope, $rootScope, $state, $ht
     }
 });
 
-travelApp.controller("HomeController", function($scope, $rootScope, $state, $http, $cookies, $window) {
+travelApp.controller("HomeController", function($scope, $rootScope, $state, $http, $cookies, $window, ngCart) {
 
     $scope.empty = true;
 
@@ -177,20 +186,45 @@ travelApp.controller("HomeController", function($scope, $rootScope, $state, $htt
             });
         }
     };
-    $scope.findBookedFlights = function() {
-
-    };
     $scope.removeRow = function(row) {
-
+        var index = $scope.rowCollectionLeave.indexOf(row);
+        if (index !== -1) {
+            $scope.rowCollectionLeave.splice(index, 1);
+        }
     };
     $scope.selectRow = function(row) {
-
+        $scope.fact="Native Angular Validation, choose OUTBOUND row ";
+        $scope.rowCollectionLeave=[];
+        $scope.rowCollectionLeave.push(row);
+        row.date=$scope.departDate;
+        ngCart.addItem(row.flight,row.name +"-"+row.flight,row.price,1,row);
+        var tempRet=[];
+        for (var k=0;k<$scope.rowCollectionRet.length;k++){
+            if($scope.rowCollectionRet[k].name == row.name){
+                tempRet.push($scope.rowCollectionRet[k]);
+            }
+        }
+        $scope.rowCollectionRet=tempRet;
     };
     $scope.removeRowRet = function(row) {
-
+        var index = $scope.rowCollectionRet.indexOf(row);
+        if (index !== -1) {
+            $scope.rowCollectionRet.splice(index, 1);
+        }
     };
     $scope.selectRowRet = function(row) {
-
+        $scope.fact="Native Angular Validation, choose INBOUND row ";
+        $scope.rowCollectionRet=[];
+        $scope.rowCollectionRet.push(row);
+        row.date=$scope.returnDate;
+        ngCart.addItem(row.flight,row.name +"-"+row.flight,row.price,1,row);
+        var tempLeave=[];
+        for (var j=0;j<$scope.rowCollectionLeave.length;j++){
+            if($scope.rowCollectionLeave[j].name == row.name){
+                tempLeave.push($scope.rowCollectionLeave[j]);
+            }
+        }
+        $scope.rowCollectionLeave=tempLeave;
     };
 
     $('.input-daterange').datepicker(
@@ -201,7 +235,8 @@ travelApp.controller("HomeController", function($scope, $rootScope, $state, $htt
         }
     ).on("changeDate", function(ev) {
         var date = new Date(ev.date);
-        $scope.departDate = ev.date;
+        //$scope.departDate = ev.date;
+        //$rootScope.publishMessage("DATE SELECTED≔" + (date.getMonth() + 1) + "-" + date.getDate() + "-" + date.getFullYear());
         $("#textAreaShowMe").val("DATE SELECTED≔" + (date.getMonth() + 1) + "-" + date.getDate() + "-" + date.getFullYear() + "\n" + $("#textAreaShowMe").val());
     }).on("show",function(sh){
         $rootScope.fact="Selecting DATE from DatePicker";
@@ -243,71 +278,24 @@ travelApp.controller("HomeController", function($scope, $rootScope, $state, $htt
     });
 });
 
-travelApp.controller('flightController',function($scope, $state,$http,$window,ngCart,md5,$cookies,jwtHelper){
-    $scope.formData = {h2:"Please Take a Moment to Create an Account"};
-    //$scope.showCode=false;
-    $scope.empty=true;
-    $scope.cart=false;
-    $scope.retEmpty=true;
-    $scope.fliEmpty=true;
-    $scope.leave="";
-    $scope.ret="";
-    $scope.fact="This window will narrate application interaction including N1QL Queries in the console";
-    $scope.rowCollectionLeave=[];
-    $scope.rowCollectionRet=[];
-    $scope.rowCollectionFlight=[];
-    $scope.findAirports=function(val){
-        $scope.fact="Typeahead bound to REST call: /api/airport/findAll";
-        $scope.publishDebug("/api/airport/findAll");
-        return $http.get("/api/airport/findAll",{
-            params:{search:val,token:$cookies.get('token')}
-        }).then(function(response){
-            return response.data;
-        });
-    }
-    $scope.findFlights = function () {
-        $scope.fact="Searching for flights using REST call: /api/flightPath/findAll";
-        $scope.empty = true;
-        $scope.rowCollectionLeave = [];
-        $scope.rowCollectionRet = [];
-        $scope.leave=this.leave;
-        $scope.publishDebug("/api/flightPath/findAll");
-        $http.get("/api/flightPath/findAll", {
-            params: {from: this.fromName, to: this.toName, leave: this.leave,token:$cookies.get('token')}
-        }).then(function (response) {
-            if (response.data.length > 0) {
-                $scope.empty = false;
-            }
-            for (var j = 0; j < response.data.length; j++) {
-                var d= new Date(Date.parse($scope.leave + " " + response.data[j].utc));
-                d.setHours(d.getHours()+response.data[j].flighttime);
-                response.data[j].utcland = d.getHours() + ":" + d.getMinutes() + ":00";
-                $scope.rowCollectionLeave.push(response.data[j]);
-            }
-        });
-        if (this.ret) {
-            $scope.publishDebug("/api/flightPath/findAll");
-            $scope.ret=this.ret;
-            $http.get("/api/flightPath/findAll", {
-                params: {from: this.toName, to: this.fromName, leave: this.ret,token:$cookies.get('token')}
-            }).then(function (responseRet) {
-                if (responseRet.data.length > 0) {
-                    $scope.retEmpty = false;
-                }
-                for (var j = 0; j < responseRet.data.length; j++) {
-                    var d= new Date(Date.parse($scope.ret + " " + responseRet.data[j].utc));
-                    d.setHours(d.getHours()+responseRet.data[j].flighttime);
-                    responseRet.data[j].utcland = d.getHours() + ":" + d.getMinutes() + ":00";
-                    $scope.rowCollectionRet.push(responseRet.data[j]);
-                }
-            });
-        }
-    }
 
-    $scope.findBookedFlights = function(){
-        $http.get("/api/user/flights",{
-            params:{token:$cookies.get('token')}
-        }).then(function(responseFlights){
+
+
+
+travelApp.controller("UserController", function($rootScope, $scope, $http, $cookies) {
+
+    $scope.rowCollectionFlight=[];
+
+    $scope.findBookedFlights = function() {
+        $rootScope.publishMessage("REST REQ=/api/user/flights");
+        $http.get("/api/user/flights",
+            {
+                params: {
+                    token: $cookies.get('token')
+                }
+            }
+        )
+        .then(function(responseFlights){
             if (responseFlights.data.length > 0) {
                 $scope.fliEmpty = false;
             }
@@ -315,53 +303,6 @@ travelApp.controller('flightController',function($scope, $state,$http,$window,ng
                 $scope.rowCollectionFlight.push(responseFlights.data[j]);
             }
         });
-    }
+    };
 
-    $scope.removeRow=function(row) {
-        var index = $scope.rowCollectionLeave.indexOf(row);
-        if (index !== -1) {
-            $scope.rowCollectionLeave.splice(index, 1);
-        }
-    }
-
-    $scope.selectRow=function(row){
-        $scope.fact="Native Angular Validation, choose OUTBOUND row "
-        $scope.rowCollectionLeave=[];
-        $scope.rowCollectionLeave.push(row);
-        row.date=this.leave;
-        ngCart.addItem(row.flight,row.name +"-"+row.flight,row.price,1,row);
-        var tempRet=[];
-        for (var k=0;k<$scope.rowCollectionRet.length;k++){
-            if($scope.rowCollectionRet[k].name == row.name){
-                tempRet.push($scope.rowCollectionRet[k]);
-            }
-        }
-        $scope.rowCollectionRet=tempRet;
-    }
-
-    $scope.removeRowRet = function removeRowRet(row) {
-        var index = $scope.rowCollectionRet.indexOf(row);
-        if (index !== -1) {
-            $scope.rowCollectionRet.splice(index, 1);
-        }
-    }
-
-    $scope.selectRowRet=function(row){
-        $scope.fact="Native Angular Validation, choose INBOUND row ";
-        $scope.rowCollectionRet=[];
-        $scope.rowCollectionRet.push(row);
-        row.date=this.ret;
-        ngCart.addItem(row.flight,row.name +"-"+row.flight,row.price,1,row);
-        var tempLeave=[];
-        for (var j=0;j<$scope.rowCollectionLeave.length;j++){
-            if($scope.rowCollectionLeave[j].name == row.name){
-                tempLeave.push($scope.rowCollectionLeave[j]);
-            }
-        }
-        $scope.rowCollectionLeave=tempLeave;
-    }
-
-    $scope.publishDebug=function(req){
-        $("#textAreaShowMe").val("REST REQ≔"+req + "\n" + $("#textAreaShowMe").val());
-    }
 });
