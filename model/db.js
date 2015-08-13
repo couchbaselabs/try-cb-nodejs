@@ -62,55 +62,64 @@ function init(done) {
                     done(false);
                     return;
                 }
-                if (parseInt(JSON.parse(bodyB).basicStats.itemCount) > config.couchbase.thresholdItemCount) {
-                    myBucket = myCluster.openBucket(bucket);
-                    db = myBucket;
-                    ODMBucket = myCluster.openBucket(bucket);
-                    ottoman.store.bucket=ODMBucket;
-                    //enableN1QL(function () {});
-                    query("CREATE INDEX temp ON `" + config.couchbase.bucket + "`(non) USING " + config.couchbase.indexType,
-                          function (err, res) {
-                              if (err) {
-                                  console.log({init: "not ready"})
-                                  done(false);
-                                  return;
-                              }
-                              if (res) {
-                                  query('SELECT COUNT(*) FROM system:indexes WHERE state="online"',
-                                        function (err, onlineCount) {
-                                            if (err) {
-                                                console.log({init: "not ready"})
-                                                done(false);
-                                                return;
-                                            }
-                                            if (onlineCount) {
-                                                console.log("INDEXES ONLINE:", onlineCount);
-                                                if (typeof onlineCount[0] !== "undefined") {
-                                                    if (onlineCount[0].$1 == 1) {
-                                                        query("DROP INDEX `" + config.couchbase.bucket + "`.temp USING " + config.couchbase.indexType,
-                                                              function (err, dropped) {
-                                                                  if (err) {
-                                                                      console.log({init: "not ready"})
-                                                                      done(false);
-                                                                      return;
-                                                                  }
-                                                                  if (dropped && status != "online") {
-                                                                      status = "online";
-                                                                      console.log({init: "ready"});
-                                                                      done(true);
-                                                                      return;
-                                                                  }
-                                                              });
+                if(responseB.statusCode!=404) {
+                    if (parseInt(JSON.parse(bodyB).basicStats.itemCount) > config.couchbase.thresholdItemCount) {
+                        myBucket = myCluster.openBucket(bucket);
+                        db = myBucket;
+                        ODMBucket = myCluster.openBucket(bucket);
+                        ottoman.store.bucket = ODMBucket;
+                        //enableN1QL(function () {});
+                        query("CREATE INDEX temp ON `" + config.couchbase.bucket + "`(non) USING " + config.couchbase.indexType,
+                              function (err, res) {
+                                  if (err) {
+                                      console.log({init: "not ready"})
+                                      done(false);
+                                      return;
+                                  }
+                                  if (res) {
+                                      query('SELECT COUNT(*) FROM system:indexes WHERE state="online"',
+                                            function (err, onlineCount) {
+                                                if (err) {
+                                                    console.log({init: "not ready"})
+                                                    done(false);
+                                                    return;
+                                                }
+                                                if (onlineCount) {
+                                                    console.log("INDEXES ONLINE:", onlineCount);
+                                                    if (typeof onlineCount[0] !== "undefined") {
+                                                        if (onlineCount[0].$1 == 1) {
+                                                            query("DROP INDEX `" + config.couchbase.bucket + "`.temp USING " + config.couchbase.indexType,
+                                                                  function (err, dropped) {
+                                                                      if (err) {
+                                                                          console.log({init: "not ready"})
+                                                                          done(false);
+                                                                          return;
+                                                                      }
+                                                                      if (dropped && status != "online") {
+                                                                          status = "online";
+                                                                          console.log({init: "ready"});
+                                                                          done(true);
+                                                                          return;
+                                                                      }
+                                                                  });
+                                                        }
                                                     }
                                                 }
-                                            }
-                                        });
-                              }
-                          });
+                                            });
+                                  }
+                              });
+                    } else {
+                        console.log({init: "not ready"});
+                        if (config.application.verbose) {
+                            console.log("--↳ VERBOSE:ERR:ITEM COUNT", JSON.parse(bodyB).basicStats.itemCount);
+                        }
+                        done(false);
+                        return;
+                    }
                 } else {
                     console.log({init: "not ready"});
                     if (config.application.verbose) {
-                        console.log("--↳ VERBOSE:ERR:ITEM COUNT", JSON.parse(bodyB).basicStats.itemCount);
+                        console.log("--↳ VERBOSE:ERR:ITEM COUNT:404 Resource not found.");
                     }
                     done(false);
                     return;

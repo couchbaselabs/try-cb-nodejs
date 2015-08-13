@@ -17,20 +17,31 @@ var checkInterval=config.application.checkInterval;
  */
 if(config.application.autoprovision){
     console.log("AUTOPROVISION:INITIATED");
-    provisionCB(function(err,done){
-        if(err){
-            console.log("AUTOPROVISION:ERR:FATAL:",err);
-          return;
+    instanceExists(function(exists){
+        if(exists){
+            console.log("AUTOPROVISIONIN:TERMINATED");
+            return;
         }
-        config.application.autoprovision=false;
-        fs.writeFile('config.json', JSON.stringify(config,null,4),function(err){
+        provisionCB(function(err,done){
             if(err){
-                console.log("AUTOPROVISION:ERR:FILESAVE:",err)
+                console.log("====-----------------------------------------------------------------------====");
+                console.log("AUTOPROVISION:ERR:FATAL:",err);
+                console.log("PLEASE CHECK config.js IS POINTING TO A VALID COUCHBASE INSTANCE");
+                console.log("====-----------------------------------------------------------------------====");
+                process.exit(9);
+                return;
             }
+            config.application.autoprovision=false;
+            fs.writeFile('config.json', JSON.stringify(config,null,4),function(err){
+                if(err){
+                    console.log("AUTOPROVISION:ERR:FILESAVE:",err)
+                }
+            });
+            console.log("AUTOPROVISION:DONE:",done);
+            return;
         });
-        console.log("AUTOPROVISION:DONE:",done);
-        return;
     });
+
 }
 
 
@@ -193,6 +204,38 @@ function isOnline(done){
     }, checkInterval);
 }
 
+function instanceExists(done) {
+    console.log("CHECKING TO SEE IF COUCHBASE PROVISIONED:", config.couchbase.endPoint);
+    request.get({
+                    url: "http://" + config.couchbase.endPoint + "/pools/default/buckets/",
+                    auth: {
+                        'user': config.couchbase.user,
+                        'pass': config.couchbase.password,
+                        'sendImmediately': true
+                    }
+                }, function (err, responseB, bodyB) {
+        if (err) {
+            console.log("COUCHBASE NOT PROVISIONED, CONTINUING");
+            done(false);
+            return;
+        }
+        console.log("COUCHBASE INSTANCE PROVISIONED:", config.couchbase.endPoint);
+        bodyB=JSON.parse(bodyB);
+        console.log("EXISTING BUCKET COUNT:",bodyB.length);
+        for (var i = 0; i < bodyB.length; i++) {
+            console.log("BUCKET:", bodyB[i].name);
+            if (bodyB[i].name == config.couchbase.bucket) {
+                console.log("BUCKET ALREADY EXISTS:", config.couchbase.bucket);
+                done(true);
+                return;
+            }
+        }
+        console.log("COUCHBASE PROVISIONED:", config.couchbase.bucket," BUCKET NOT YET BUILT, CONTINUING");
+        done(false);
+    });
+}
+
+
 /**
  *
  * @param done
@@ -336,6 +379,9 @@ function provisionBucket(done) {
                 return;
             }
             console.log({'provisionBucket':httpResponse.statusCode});
+            if(httpResponse.statusCode!=202){
+                done(body,null);
+            }
             done(null,httpResponse.statusCode);
         });
     }
