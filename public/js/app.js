@@ -274,7 +274,7 @@ travelApp.controller("HomeController", function($scope, $rootScope, $state, $htt
                                           onText: 'on',
                                           offText: 'off',
                                           size: 'small',
-                                          state: false
+                                          state: $rootScope.showCode
                                             });
 
     $("input.switchShowMe").on('switchChange.bootstrapSwitch', function(event, state) {
