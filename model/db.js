@@ -15,13 +15,20 @@ var status="offline";  //offline,pending,online
 var ottoman = require('ottoman');
 var faye = require('faye');
 var client = new faye.Client('http://localhost:8000/faye');
+var ProgressBar = require('progress');
+var barDone=false;
+var bar = new ProgressBar('      LOADING [:bar] :percent :etas', {
+    complete: '=',
+    incomplete: ' ',
+    total: 20
+});
 
 
 /**
  *
  */
 function init(done) {
-    console.log({init: "check"});
+    // console.log("ENVIRONMENT: CHECK IF READY");
     if(config.application.verbose){
         console.log("VERBOSE:TRYING QUERY:","http://" + config.couchbase.n1qlService + "/query?statement=SELECT+name+FROM+system%3Akeyspaces")
     }
@@ -34,7 +41,7 @@ function init(done) {
                     }
                 }, function (err, response, body) {
         if (err) {
-            console.log({init: "not ready"});
+            console.log("    ENVIRONMENT: QUERY SERVICE",config.couchbase.n1qlService, "NOT RESPONDING");
             if (config.application.verbose) {
                 console.log("↳ VERBOSE:ERR:", err);
             }
@@ -55,7 +62,7 @@ function init(done) {
                             }
                         }, function (err, responseB, bodyB) {
                 if (err) {
-                    console.log({init: "not ready"});
+                    console.log("ENVIRONMENT: COUCHBASE",endPoint, "NOT RESPONDING");
                     if (config.application.verbose) {
                         console.log("--↳ VERBOSE:ERR", err);
                     }
@@ -68,11 +75,11 @@ function init(done) {
                         db = myBucket;
                         ODMBucket = myCluster.openBucket(bucket);
                         ottoman.store.bucket = ODMBucket;
-                        //enableN1QL(function () {});
+                        // console.log("ENVIRONMENT: SERVICES: CHECK INDEXES ONLINE");
                         query("CREATE INDEX temp ON `" + config.couchbase.bucket + "`(non) USING " + config.couchbase.indexType,
                               function (err, res) {
                                   if (err) {
-                                      console.log({init: "not ready"})
+                                      console.log("ENVIRONMENT: INDEX QUERY NOT RESPONDING");
                                       done(false);
                                       return;
                                   }
@@ -80,24 +87,27 @@ function init(done) {
                                       query('SELECT COUNT(*) FROM system:indexes WHERE state="online"',
                                             function (err, onlineCount) {
                                                 if (err) {
-                                                    console.log({init: "not ready"})
+                                                    console.log("ENVIRONMENT: INDEX QUERY NOT RESPONDING");
                                                     done(false);
                                                     return;
                                                 }
                                                 if (onlineCount) {
-                                                    console.log("INDEXES ONLINE:", onlineCount);
+                                                    if(!config.application.autoprovision){
+                                                        console.log("ENVIRONMENT: READY--LOGIN AT:","http://" + config.application.hostName + ":" + config.application.httpPort);
+                                                    }
+                                                    //console.log("ENVIRONMENT: SERVICES:","INDEXES ONLINE", onlineCount);
                                                     if (typeof onlineCount[0] !== "undefined") {
                                                         if (onlineCount[0].$1 == 1) {
                                                             query("DROP INDEX `" + config.couchbase.bucket + "`.temp USING " + config.couchbase.indexType,
                                                                   function (err, dropped) {
                                                                       if (err) {
-                                                                          console.log({init: "not ready"})
+                                                                          console.log("ENVIRONMENT: INDEX QUERY NOT RESPONDING");
                                                                           done(false);
                                                                           return;
                                                                       }
                                                                       if (dropped && status != "online") {
                                                                           status = "online";
-                                                                          console.log({init: "ready"});
+                                                                          //console.log("ENVIRONMENT: ONLINE");
                                                                           done(true);
                                                                           return;
                                                                       }
@@ -109,15 +119,25 @@ function init(done) {
                                   }
                               });
                     } else {
-                        console.log({init: "not ready"});
+                        if(!barDone) {
+                            var ratio = (parseInt(JSON.parse(bodyB).basicStats.itemCount) / config.couchbase.thresholdItemCount);
+                            if (ratio < .97) {
+                                bar.update(ratio);
+                            } else {
+                                barDone=true;
+                                bar.update(1);
+                                //bar.terminate();
+                            }
+                        }
                         if (config.application.verbose) {
                             console.log("--↳ VERBOSE:ERR:ITEM COUNT", JSON.parse(bodyB).basicStats.itemCount);
                         }
+
                         done(false);
                         return;
                     }
                 } else {
-                    console.log({init: "not ready"});
+                    console.log("ENVIRONMENT: BUCKET",bucket,"REST SERVICE NOT PROVISIONED");
                     if (config.application.verbose) {
                         console.log("--↳ VERBOSE:ERR:ITEM COUNT:404 Resource not found.");
                     }
@@ -243,20 +263,21 @@ function query(sql,user,done){
     // Setup Query
     var N1qlQuery = couchbase.N1qlQuery;
 
-    // Check if configured to show queries in console, and also if set to publish
-    //   using Faye
+    // Check if configured to show queries in console
     if(config.couchbase.showQuery){
         console.log("QUERY:",sql);
-        if(channel){
-            var publication = client.publish('/'+channel, {text: 'N1QL='+sql},function(err,pubres){
-                if(err){
-                    console.log("ERR:",err);
-                }
-                if(pubres){
-                    console.log("SUCCESS:",pubres);
-                }
-            });
-        }
+    }
+
+    // publish to channel subscriber using faye
+    if(channel){
+        var publication = client.publish('/'+channel, {text: 'N1QL='+sql},function(err,pubres){
+            if(err){
+                console.log("ERR:",err);
+            }
+            if(pubres){
+                console.log("SUCCESS:",pubres);
+            }
+        });
     }
 
     // Make a N1QL specific Query

@@ -36,7 +36,7 @@ travelApp.config(function($stateProvider, $urlRouterProvider) {
  * loaded
  */
 travelApp.run(function($rootScope, $state, $cookies) {
-    $rootScope.showCode = true;
+    $rootScope.showCode = false;
     $rootScope.publishMessage = function(message) {
         $rootScope.textAreaShowMe = message + "\n" + ($rootScope.textAreaShowMe ? $rootScope.textAreaShowMe : "");
     };
@@ -48,6 +48,7 @@ travelApp.run(function($rootScope, $state, $cookies) {
         $state.go("home");
     } else {
         $state.go("login");
+        $rootScope.fact="User authorization through couchbase and ottoman user objects";
     }
 });
 
@@ -58,7 +59,7 @@ travelApp.controller("LoginController", function($scope, $rootScope, $state, $ht
         var cookieExpiration = new Date();
         cookieExpiration.setHours(cookieExpiration.getHours() + 4);
         if(isNew === true) {
-            $rootScope.fact = "REST POST=/api/user/login";
+            $rootScope.publishMessage("REST POST=/api/user/login");
             $http.post("/api/user/login",
                 {
                     user: username,
@@ -82,7 +83,7 @@ travelApp.controller("LoginController", function($scope, $rootScope, $state, $ht
                 console.log(JSON.stringify(error));
             });
         } else {
-            $rootScope.fact = "REST REQ=/api/user/login";
+            $rootScope.publishMessage("REST REQ=/api/user/login");
             $http.get("/api/user/login",
                 {
                     params: {
@@ -197,7 +198,7 @@ travelApp.controller("HomeController", function($scope, $rootScope, $state, $htt
         }
     };
     $scope.selectRow = function(row) {
-        $scope.fact="Native Angular Validation, choose OUTBOUND row ";
+        $rootScope.fact="Native Angular Validation, choose OUTBOUND row ";
         $scope.rowCollectionLeave=[];
         $scope.rowCollectionLeave.push(row);
         row.date=$scope.departDate;
@@ -217,7 +218,7 @@ travelApp.controller("HomeController", function($scope, $rootScope, $state, $htt
         }
     };
     $scope.selectRowRet = function(row) {
-        $scope.fact="Native Angular Validation, choose INBOUND row ";
+        $rootScope.fact="Native Angular Validation, choose INBOUND row ";
         $scope.rowCollectionRet=[];
         $scope.rowCollectionRet.push(row);
         row.date=$scope.returnDate;
@@ -273,7 +274,7 @@ travelApp.controller("HomeController", function($scope, $rootScope, $state, $htt
                                           onText: 'on',
                                           offText: 'off',
                                           size: 'small',
-                                          state: true
+                                          state: false
                                             });
 
     $("input.switchShowMe").on('switchChange.bootstrapSwitch', function(event, state) {
@@ -291,7 +292,8 @@ travelApp.controller("UserController", function($rootScope, $scope, $http, $cook
     $scope.rowCollectionFlight=[];
 
     $scope.findBookedFlights = function() {
-        $rootScope.fact = "REST REQ=/api/user/flights";
+        $rootScope.fact="Searching for previously booked flights";
+        $rootScope.publishMessage("REST REQ=/api/user/flights");
         $http.get("/api/user/flights",
             {
                 params: {

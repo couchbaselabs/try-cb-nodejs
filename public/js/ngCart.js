@@ -350,7 +350,7 @@ angular.module('ngCart.directives', ['ngCart.fulfilment'])
                 data:'='
             },
             transclude: true,
-            templateUrl: 'template/ngCart/addtocart.html',
+            templateUrl: 'templates/ngCart/addtocart.html',
             link:function(scope, element, attrs){
                 scope.attrs = attrs;
                 scope.inCart = function(){
@@ -379,10 +379,11 @@ angular.module('ngCart.directives', ['ngCart.fulfilment'])
             controller: 'CartController',
             scope: {
             },
-            templateUrl: 'template/ngCart/cart.html',
+            templateUrl: 'templates/ngCart/cart.html',
             link: function (scope, element, attrs) {
                 scope.book = function () {
-                    $rootScope.fact = "REST REQ=/api/user/flights";
+                    $rootScope.fact="Book Flights, using angular ngCart Directive";
+                    $rootScope.publishMessage("REST POST=/api/user/flights");
                     $http.post('/api/user/flights', {
                         token: $cookies.get('token'),
                         flights: this.ngCart.getItems()
@@ -398,14 +399,14 @@ angular.module('ngCart.directives', ['ngCart.fulfilment'])
         };
     }])
 
-    .directive('ngcartSummary', ['$location','$window','$cookies',function(location,window,$cookies){
+    .directive('ngcartSummary', ['$location','$window','$cookies','$rootScope',function(location,window,$cookies,$rootScope){
         return {
             restrict : 'AEC',
             controller : 'CartController',
             scope: {
             },
             transclude: true,
-            templateUrl: 'template/ngCart/summary.html',
+            templateUrl: 'templates/ngCart/summary.html',
             link:function(scope,element, attrs){
                 scope.isActive = function(viewLocation) {
                     var absUrl = location.absUrl();
@@ -419,7 +420,8 @@ angular.module('ngCart.directives', ['ngCart.fulfilment'])
                 },
                     scope.logout=function(){
                         $cookies.remove("user");
-                        $cookies.remove("token");
+                        $rootScope.fact="User authorization through couchbase and ottoman user objects";
+                        $rootScope.textAreaShowMe="CONSOLE RESET!! User logged out.";
                     },
                     scope.getUser=function(){
                         if($cookies.get('user')===undefined){
@@ -450,7 +452,7 @@ angular.module('ngCart.directives', ['ngCart.fulfilment'])
                 settings:'='
             },
             transclude: true,
-            templateUrl: 'template/ngCart/checkout.html'
+            templateUrl: 'templates/ngCart/checkout.html'
         };
     }]);;
 angular.module('ngCart.fulfilment', [])

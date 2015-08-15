@@ -16,6 +16,7 @@
     "express": "*",
     "couchbase": "*",
     "body-parser": "*",
+    "progress":"*",
     "request": "*",
     "jsonwebtoken":"*",
     "haversine":"*",

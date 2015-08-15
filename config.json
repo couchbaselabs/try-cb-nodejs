@@ -9,13 +9,14 @@
         "dataPath": "",
         "indexPath": "",
         "indexType": "gsi",
-        "showQuery": true,
+        "showQuery": false,
         "indexMemQuota": 2048,
         "dataMemQuota": 1024,
         "thresholdItemCount": 31565
     },
     "application": {
         "autoprovision": true,
+        "hostName": "localhost",
         "httpPort": 3000,
         "dataSource": "embedded",
         "wait": 3000,

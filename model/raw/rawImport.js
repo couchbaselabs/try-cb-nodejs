@@ -11,33 +11,42 @@ var db=require('./../db');
 var fs = require('fs');
 var tryCount=0;
 var checkInterval=config.application.checkInterval;
+var ProgressBar = require('progress');
+var barDone=false;
+var bar = new ProgressBar('      CHECKING [:bar] :percent :etas', {
+    complete: '=',
+    incomplete: ' ',
+    total: 20
+});
 
 /**
  *
  */
 if(config.application.autoprovision){
-    console.log("AUTOPROVISION:INITIATED");
+    console.log(" ⇒ AUTOPROVISION: INITIATED");
     instanceExists(function(exists){
         if(exists){
-            console.log("AUTOPROVISIONIN:TERMINATED");
+            console.log(" ⇐ AUTOPROVISION: ALREADY PROVISIONED. MOVING ON");
+            console.log("LOGIN AT http://" + config.application.hostName + ":" + config.application.httpPort);
             return;
         }
         provisionCB(function(err,done){
             if(err){
-                console.log("====-----------------------------------------------------------------------====");
-                console.log("AUTOPROVISION:ERR:FATAL:",err);
+                console.log("====----====");
+                console.log("AUTOPROVISION: ERR:FATAL:",err);
                 console.log("PLEASE CHECK config.js IS POINTING TO A VALID COUCHBASE INSTANCE");
-                console.log("====-----------------------------------------------------------------------====");
+                console.log("====----====");
                 process.exit(9);
                 return;
             }
             config.application.autoprovision=false;
             fs.writeFile('config.json', JSON.stringify(config,null,4),function(err){
                 if(err){
-                    console.log("AUTOPROVISION:ERR:FILESAVE:",err)
+                    console.log(" ⇐ AUTOPROVISION: ERR:FILESAVE:",err)
                 }
             });
-            console.log("AUTOPROVISION:DONE:",done);
+            console.log(" ⇐ AUTOPROVISION: DONE");
+            console.log("LOGIN AT http://" + config.application.hostName + ":" + config.application.httpPort);
             return;
         });
     });
@@ -110,7 +119,7 @@ function buidIndexes(done) {
                                 if (indexBuilt) {
                                     isOnline(function(online){
                                         if(online){
-                                            console.log({'indexes': 'built'});
+                                            console.log("      PROVISION: INDEXES ONLINE");
                                             done(null, {'indexes': 'built'});
                                             return;
                                         }
@@ -168,7 +177,11 @@ function isActive(cutOff,done) {
 function isAvailable(done){
     tryCount=0;
     timerAvailable = setInterval(function () {
-        console.log("CHECKING IF INDEX SERVICE READY:ATTEMPT ",++tryCount);
+        if(tryCount==0) {
+        console.log("      PROVISION: LOADING BUCKET", config.couchbase.bucket);
+            ++tryCount;
+            //console.log("  PROVISION: CHECKING IF INDEX SERVICE READY:ATTEMPT ", ++tryCount);
+        }
         db.init(function(initialized){
             if(initialized && !available){
                 available=true;
@@ -187,12 +200,19 @@ function isAvailable(done){
 function isOnline(done){
     tryCount=0;
     timerOnline = setInterval(function () {
-        console.log("CHECKING IF 8 INDEXES ARE ONLINE:ATTEMPT ",++tryCount);
+        if(tryCount == 0){
+            console.log("      PROVISION: CHECKING IF INDEXES ARE ONLINE");
+            ++tryCount
+        }
         db.query('SELECT COUNT(*) FROM system:indexes WHERE state="online"', function(err,onlineCount){
             if(onlineCount){
-                console.log("INDEXES ONLINE:",onlineCount);
+                if(!barDone) {
+                    bar.tick();
+                }
                 if(typeof onlineCount[0]!== "undefined") {
                     if (onlineCount[0].$1 == 8&&!online) {
+                        bar.update(1);
+                        barDone=true;
                         online=true;
                         clearInterval(timerOnline);
                         done(true);
@@ -205,7 +225,8 @@ function isOnline(done){
 }
 
 function instanceExists(done) {
-    console.log("CHECKING TO SEE IF COUCHBASE PROVISIONED:", config.couchbase.endPoint);
+    console.log("    COUCHBASE INSTANCE:", config.couchbase.endPoint, "LOCATE");
+    console.log("    COUCHBASE INSTANCE BUCKET:", config.couchbase.bucket,"CHECK IF PROVISIONED");
     request.get({
                     url: "http://" + config.couchbase.endPoint + "/pools/default/buckets/",
                     auth: {
@@ -215,22 +236,22 @@ function instanceExists(done) {
                     }
                 }, function (err, responseB, bodyB) {
         if (err) {
-            console.log("COUCHBASE NOT PROVISIONED, CONTINUING");
+            console.log("     COUCHBASE INSTANCE: NOT FOUND");
             done(false);
             return;
         }
-        console.log("COUCHBASE INSTANCE PROVISIONED:", config.couchbase.endPoint);
+        console.log("     COUCHBASE INSTANCE:", config.couchbase.endPoint,"LOCATED");
         bodyB=JSON.parse(bodyB);
-        console.log("EXISTING BUCKET COUNT:",bodyB.length);
+        console.log("     COUCHBASE INSTANCE BUCKET COUNT:",bodyB.length,"LISTED BELOW");
         for (var i = 0; i < bodyB.length; i++) {
-            console.log("BUCKET:", bodyB[i].name);
+            console.log("      COUCHBASE INSTANCE BUCKET:", bodyB[i].name);
             if (bodyB[i].name == config.couchbase.bucket) {
-                console.log("BUCKET ALREADY EXISTS:", config.couchbase.bucket);
+                console.log("      COUCHBASE INSTANCE EXISTS:", config.couchbase.bucket,"PROVISIONED");
                 done(true);
                 return;
             }
         }
-        console.log("COUCHBASE PROVISIONED:", config.couchbase.bucket," BUCKET NOT YET BUILT, CONTINUING");
+        console.log("      COUCHBASE INSTANCE EXISTS:", config.couchbase.bucket,"NOT PROVISIONED, CONTINUING");
         done(false);
     });
 }
@@ -270,7 +291,7 @@ function provisionInit(done) {
             done(err,null);
             return;
         }
-        console.log({'provisionInit':httpResponse.statusCode});
+        console.log("      PROVISION INITIALIZE SERVICES",{'provisionInit':httpResponse.statusCode});
         done(null,httpResponse);
 
     });
@@ -290,7 +311,7 @@ function provisionRename(done) {
             done(err,null);
             return;
         }
-        console.log({'provisionRename':httpResponse.statusCode});
+        console.log("      PROVISION RENAMING",{'provisionRename':httpResponse.statusCode});
         done(null,httpResponse.statusCode);
 
     });
@@ -310,7 +331,7 @@ function provisionServices(done) {
             done(err,null);
             return;
         }
-        console.log({'provisionServices':httpResponse.statusCode});
+        console.log("      PROVISION SERVICE",{'provisionServices':httpResponse.statusCode});
         done(null,httpResponse.statusCode);
 
     });
@@ -327,7 +348,7 @@ function provisionMemory(done) {
             done(err,null);
             return;
         }
-        console.log({'provisionServices':httpResponse.statusCode});
+        console.log("      PROVISION MEMORY",{'provisionMemory':httpResponse.statusCode});
         done(null,httpResponse.statusCode);
 
     });
@@ -350,7 +371,7 @@ function provisionAdmin(done) {
             done(err,null);
             return;
         }
-        console.log({'provisionAdmin':httpResponse.statusCode});
+        console.log("      PROVISION ADMIN USER",{'provisionAdmin':httpResponse.statusCode});
         done(null,httpResponse.statusCode);
 
     });
@@ -378,7 +399,7 @@ function provisionBucket(done) {
                 done(err,null);
                 return;
             }
-            console.log({'provisionBucket':httpResponse.statusCode});
+            console.log("      PROVISION BUCKET",{'provisionBucket':httpResponse.statusCode});
             if(httpResponse.statusCode!=202){
                 done(body,null);
             }
@@ -431,7 +452,7 @@ function provision(done) {
                                                     available = false;
                                                     isAvailable(function (ready) {
                                                         if (ready) {
-                                                            console.log({'bucket': 'built'});
+                                                            console.log("      PROVISION: BUCKET", config.couchbase.bucket, "LOADED");
                                                             done(null, {'bucket': 'built'});
                                                             return;
                                                         }
