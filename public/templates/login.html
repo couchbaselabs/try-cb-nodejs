@@ -26,7 +26,7 @@
             <input type="checkbox" ng-checked="true" name="isNew" ng-model="isNew" ng-init="isNew=true" />New User
         </label>
         <label class="checkbox">
-            <input type="checkbox" ng-checked="false" name="narration" ng-change="toggleDebug()" ng-model="narration" ng-init="narration=false" />Enable Narration
+            <input type="checkbox" ng-checked="showCode" name="narration" ng-change="toggleDebug()" ng-model="narration" ng-init="narration=showCode" />Enable Narration
         </label>
         <button type="button" class="btn btn-lg btn-primary btn-block" ng-disabled="loginForm.$invalid" ng-click="login(username, password, isNew)">Sign in</button>
     </form>
