@@ -40,7 +40,7 @@ travelApp.run(function($rootScope, $state, $cookies) {
     $rootScope.publishMessage = function(message) {
         $rootScope.textAreaShowMe = message + "\n" + ($rootScope.textAreaShowMe ? $rootScope.textAreaShowMe : "");
     };
-    fayeClient = new Faye.Client("http://" + window.location.hostname + ":8000" + "/faye");
+    fayeClient = new Faye.Client("http://" + window.location.hostname + ":8000" + "/faye",{timeout:30});
     if($cookies.get("user")) {
         var subscription = fayeClient.subscribe("/" + $cookies.get("user"), function(message) {
             $rootScope.publishMessage(message.text);
