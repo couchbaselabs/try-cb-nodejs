@@ -11,7 +11,7 @@
 #
 #    docker run -it --rm -p 3000:3000 -p 8091:8091 try-cb-nodejs
 #
-FROM couchbase/server:enterprise-4.0.0-dp
+FROM couchbase/server:enterprise-4.0.0-rc0	
 
 RUN yum -y install gcc-c++
 
