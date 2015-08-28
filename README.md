@@ -11,14 +11,14 @@ The steps below assume you are running a standalone couchbase instance running k
  - [3] Make a directory, clone this repo, install dependencies, start the application.  From a terminal:   
 
     **mkidr ~/try-cb    
-    git clone https://github.com/ToddGreenstein/try-cb-nodejs.git $ ~/try-cb   
+    git clone https://github.com/ToddGreenstein/try-cb-nodejs.git ~/try-cb   
     cd ~/try-cb**
 
     **NOTE**:_If you already have a configured instance of Couchbase Server, edit the "config.json file in the root of the cloned repository and change the username and password fields to match the credentials you entered when you setup couchbase. You can also configure the application to use a remote instance of couchbase or MDS by editing the endPoint, n1qlService and hostname fields.  For further information on MDS, refer to the Couchbase Documentation_   
     
-    **sudo npm install node-gyp -g
-    npm install    
-    node app.js**
+    **sudo npm install node-gyp -g  
+     npm install    
+     node app.js**
     
  - [4] Open a browser and load the url http://localhost:3000
 
