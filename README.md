@@ -6,7 +6,8 @@ A sample application and dataset for getting started with Couchbase 4.0.  The ap
 ## Installation and Configuration
 The steps below assume you are running a standalone couchbase instance running kv, indexing, and query services on the same server where the node application will also be running.  The config.json file in the root of this application can be edited to handle more complex topologies such as running couchbase server inside a vm.   
 
- - [1] Install a Couchbase Server, with integrated query service, and start the server.   There is no need to manually configure the server through the admin UI, steps 3 and 4 (below) will **automatically** provision couchbase and the application.   If you've already configured a local instance of Couchbase Server 4.0 or newer, the application can use this instance as long as you specify the credentials to connect to Couchbase within the application configuration file.  
+ - [1] Install a Couchbase Server, with integrated query service, and start the server.   There is no need to manually configure the server through the admin UI, steps 3 and 4 (below) will **automatically** provision couchbase and the application.   If you've already configured a local instance of Couchbase Server 4.0 or newer, the application can use this instance as long as you specify the credentials to connect to Couchbase within the application configuration file.
+
  - [2] Install Node.js
  - [3] Make a directory, clone this repo, install dependencies, start the application.  From a terminal:   
 
