@@ -6,15 +6,19 @@ A sample application and dataset for getting started with Couchbase 4.0.  The ap
 ## Installation and Configuration
 The steps below assume you are running a standalone couchbase instance running kv, indexing, and query services on the same server where the node application will also be running.  The config.json file in the root of this application can be edited to handle more complex topologies such as running couchbase server inside a vm.   
 
- - [1] Install a Couchbase Server, with integrated query service, and start the server.   There is no need to manually configure the server through the admin UI, steps 3 and 4 (below) will **automatically** provision couchbase and the application.
+ - [1] Install a Couchbase Server, with integrated query service, and start the server.   There is no need to manually configure the server through the admin UI, steps 3 and 4 (below) will **automatically** provision couchbase and the application.   If you've already configured a local instance of Couchbase Server 4.0 or newer, the application can use this instance as long as you specify the credentials to connect to Couchbase within the application configuration file.  
  - [2] Install Node.js
  - [3] Make a directory, clone this repo, install dependencies, start the application.  From a terminal:   
 
-    mkidr ~/try-cb    
+    **mkidr ~/try-cb    
     git clone https://github.com/ToddGreenstein/try-cb-nodejs.git $ ~/try-cb   
-    cd ~/try-cb    
+    cd ~/try-cb**
+
+    **NOTE**:_If you already have a configured instance of Couchbase Server, edit the "config.json file in the root of the cloned repository and change the username and password fields to match the credentials you entered when you setup couchbase. You can also configure the application to use a remote instance of couchbase or MDS by editing the endPoint, n1qlService and hostname fields.  For further information on MDS, refer to the Couchbase Documentation _   
+    
+    **sudo npm install node-gyp -g
     npm install    
-    node app.js
+    node app.js**
     
  - [4] Open a browser and load the url http://localhost:3000
 
