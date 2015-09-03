@@ -181,7 +181,7 @@ travelApp.controller("HomeController", function($scope, $rootScope, $state, $htt
                     $scope.retEmpty = false;
                 }
                 for (var j = 0; j < responseRet.data.length; j++) {
-                    var d= new Date(Date.parse($scope.ret + " " + responseRet.data[j].utc));
+                    var d= new Date(Date.parse($scope.returnDate + " " + responseRet.data[j].utc));
                     d.setHours(d.getHours()+responseRet.data[j].flighttime);
                     responseRet.data[j].utcland = d.getHours() + ":" + d.getMinutes() + ":00";
                     $scope.rowCollectionRet.push(responseRet.data[j]);
