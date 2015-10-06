@@ -270,7 +270,7 @@ function query(sql,user,done){
 
     // publish to channel subscriber using faye
     if(channel){
-        var publication = client.publish('/'+channel, {text: 'N1QL='+sql},function(err,pubres){
+        var publication = client.publish('/'+channel.replace(".","_"), {text: 'N1QL='+sql},function(err,pubres){
             if(err){
                 console.log("ERR:",err);
             }

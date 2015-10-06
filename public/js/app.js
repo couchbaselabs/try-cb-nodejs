@@ -36,13 +36,13 @@ travelApp.config(function($stateProvider, $urlRouterProvider) {
  * loaded
  */
 travelApp.run(function($rootScope, $state, $cookies) {
-    $rootScope.showCode = false;
+    $rootScope.showCode = true;
     $rootScope.publishMessage = function(message) {
         $rootScope.textAreaShowMe = message + "\n" + ($rootScope.textAreaShowMe ? $rootScope.textAreaShowMe : "");
     };
     fayeClient = new Faye.Client("http://" + window.location.hostname + ":8000" + "/faye",{timeout:30});
     if($cookies.get("user")) {
-        var subscription = fayeClient.subscribe("/" + $cookies.get("user"), function(message) {
+        var subscription = fayeClient.subscribe("/" + ($cookies.get("user")).replace(".","_"), function(message) {
             $rootScope.publishMessage(message.text);
         });
         $state.go("home");
@@ -71,7 +71,7 @@ travelApp.controller("LoginController", function($scope, $rootScope, $state, $ht
                     $scope.formData.error = null;
                     $cookies.put('token',response.data.success, {"expires": cookieExpiration});
                     $cookies.put('user',jwtHelper.decodeToken(response.data.success).user, {"expires": cookieExpiration});
-                    var subscription = fayeClient.subscribe("/" + $cookies.get("user"), function(message) {
+                    var subscription = fayeClient.subscribe("/" + ($cookies.get("user")).replace(".","_"), function(message) {
                         $rootScope.publishMessage(message.text);
                     });
                     $state.go("home");
@@ -97,7 +97,7 @@ travelApp.controller("LoginController", function($scope, $rootScope, $state, $ht
                     $scope.formData.error=null;
                     $cookies.put('token',response.data.success, {"expires": cookieExpiration});
                     $cookies.put('user',jwtHelper.decodeToken(response.data.success).user, {"expires": cookieExpiration});
-                    var subscription = fayeClient.subscribe("/" + $cookies.get("user"), function(message) {
+                    var subscription = fayeClient.subscribe("/" + ($cookies.get("user")).replace(".","_"), function(message) {
                         $rootScope.publishMessage(message.text);
                     });
                     $state.go("home");
