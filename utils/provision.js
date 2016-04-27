@@ -15,6 +15,7 @@ class cluster {
         var locals = {};
         locals.endPoint = config.couchbase.endPoint;
         locals.endPointQuery = config.couchbase.n1qlService;
+        locals.endPointFts = config.couchbase.ftsService;
         locals.hostName = config.couchbase.hostName;
         locals.sampleBucket = config.couchbase.bucket;
         locals.sampleBucketCount = config.couchbase.thresholdItemCount;
@@ -28,6 +29,7 @@ class cluster {
         locals.dataPath = config.couchbase.dataPath;
         locals.indexPath = config.couchbase.indexPath;
         locals.checkInterval = config.application.checkInterval;
+        locals.ftsIndex=config.couchbase.ftsIndex;
         locals.finsihed = false;
         locals.currentCount = 0;
         locals.timerWait = "";
@@ -47,6 +49,7 @@ class cluster {
         //  promise is instantiated.  The final functional call is
         //  is bound to the calling scope to have access to the
         //  timer variable.
+
         this._verifyNodejsVersion(locals)
             .then(this._instanceExsists)
             .then(this._init)
@@ -57,6 +60,7 @@ class cluster {
             .then(this._admin)
             .then(this._bucket)
             .then(this._loaded.bind(this))
+            .then(this._buildFtsIndex.bind(this))
             .then(this._finish.bind(this))
             .catch((err) => {
                 console.log("ERR:", err)
@@ -328,18 +332,41 @@ class cluster {
                     this._itemCount().then((loaded)=> {
                         if (loaded) {
                             clearInterval(this.locals.timerLoop);
-                            process.stdout.write("    LOADING ITEMS:100%  of " +this.locals.sampleBucketCount);
+                            process.stdout.write("    LOADING ITEMS:100%  of " +this.locals.sampleBucketCount + " Items");
                             console.log("\n    BUCKET:", this.locals.sampleBucket, "LOADED.");
                             resolve("DONE");
                             return;
                         }
                         process.stdout.write("    LOADING ITEMS:" +
                             Math.round(100*(this.locals.currentCount/this.locals.sampleBucketCount))+ "%  of " +
-                            this.locals.sampleBucketCount + "\r");
+                            this.locals.sampleBucketCount + " Items\r");
                     });
                 }, this.locals.checkInterval);
             }
         );
+    }
+
+    _buildFtsIndex(){
+        return new Promise(
+            (resolve, reject) => {
+                request({
+                    url: 'http://' + this.locals.endPointFts + '/api/index/' + this.locals.ftsIndex.name,
+                    method:'PUT',
+                    json: true,
+                    body: this.locals.ftsIndex,
+                    auth: {
+                        'user': this.locals.user,
+                        'pass': this.locals.password,
+                        'sendImmediately': true
+                    }
+                }, (err, httpResponse, body) => {
+                    if (err) {
+                        reject(err);
+                    }
+                    console.log("  PROVISION FTS INDEX:", httpResponse.statusCode);
+                    resolve("ok");
+                });
+            });
     }
 
     _verifyNodejsVersion(locals) {
