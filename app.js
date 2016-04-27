@@ -1,6 +1,6 @@
 var express = require('express');
 var app = express();
-var config = require('./config');
+var config = require('./utils/config');
 var path = require('path');
 
 app.use(express.static(path.join(__dirname, 'public')));

@@ -1,5 +1,5 @@
-var db = require('./db');
-var config = require('./../config');
+var db = require('./../utils/db');
+var config = require('./../utils/config');
 
 
 /**

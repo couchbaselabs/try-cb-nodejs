@@ -1,6 +1,6 @@
 {
   "name": "try-cb",
-  "version": "0.0.4",
+  "version": "0.1.0",
   "description": "Sample Application for Couchbase, Node.js, Angular, and Express",
   "homepage": "http://www.couchbase.com",
   "repository": {
@@ -21,7 +21,11 @@
     "jsonwebtoken":"*",
     "haversine":"*",
     "faye":"*",
-    "ottoman":"git+https://github.com/couchbaselabs/node-ottoman.git#refactor"
+    "ottoman":"*"
+  },
+  "scripts":{
+    "build":"node utils/provision.js",
+    "start":"node app.js"
   },
   "contributors": [
     {

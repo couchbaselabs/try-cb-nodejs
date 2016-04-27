@@ -9,9 +9,11 @@
         "dataPath": "",
         "indexPath": "",
         "indexType": "gsi",
+        "indexerStorageMode":"forestdb",
         "showQuery": false,
         "indexMemQuota": 2048,
         "dataMemQuota": 1024,
+        "ftsMemoryQuota":1024,
         "thresholdItemCount": 31565
     },
     "application": {
