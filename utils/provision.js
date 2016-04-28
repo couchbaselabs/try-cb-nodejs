@@ -12,6 +12,8 @@ class cluster {
         //  The constructor instantiates a "config" and passes this
         //  through the provisioning process.
 
+        //implementationVersion
+
         var locals = {};
         locals.endPoint = config.couchbase.endPoint;
         locals.endPointQuery = config.couchbase.n1qlService;
@@ -46,7 +48,7 @@ class cluster {
 
         // Provision promise chain sequence.  Without binding "this",
         //  scope is not preserved from the caller each time a new
-        //  promise is instantiated.  The final functional call is
+        //  promise is instantiated.  The final 3 functional calls are
         //  is bound to the calling scope to have access to the
         //  timer variable.
 
@@ -112,6 +114,7 @@ class cluster {
                 }, (err, httpResponse, body) => {
                     if (err) {
                         reject(err);
+                        return;
                     }
                     console.log("  PROVISION INITIALIZE SERVICES:", httpResponse.statusCode);
                     resolve(locals);
@@ -130,6 +133,7 @@ class cluster {
                 }, (err, httpResponse, body) => {
                     if (err) {
                         reject(err);
+                        return;
                     }
                     console.log("  PROVISION RENAMING:", httpResponse.statusCode);
                     resolve(locals);
@@ -148,6 +152,7 @@ class cluster {
                 }, (err, httpResponse, body) => {
                     if (err) {
                         reject(err);
+                        return;
                     }
                     console.log("  PROVISION INDEX STORAGE MODE:", httpResponse.statusCode);
                     resolve(locals);
@@ -170,6 +175,7 @@ class cluster {
                 }, (err, httpResponse, body) => {
                     if (err) {
                         reject(err);
+                        return;
                     }
                     console.log("  PROVISION SERVICE:", httpResponse.statusCode);
                     resolve(locals);
@@ -193,6 +199,7 @@ class cluster {
                 }, (err, httpResponse, body) => {
                     if (err) {
                         reject(err);
+                        return;
                     }
                     console.log("  PROVISION MEMORY:", httpResponse.statusCode);
                     resolve(locals);
@@ -213,6 +220,7 @@ class cluster {
                 }, (err, httpResponse, body) => {
                     if (err) {
                         reject(err);
+                        return;
                     }
                     console.log("  PROVISION ADMIN USER:", httpResponse.statusCode);
                     resolve(locals);
@@ -237,6 +245,7 @@ class cluster {
                 }, (err, httpResponse, body) => {
                     if (err) {
                         reject(err);
+                        return;
                     }
                     console.log("  PROVISION BUCKET:", httpResponse.statusCode);
                     if (httpResponse.statusCode == 202) {
@@ -292,6 +301,7 @@ class cluster {
                 }, (err, httpResponse, body) => {
                     if (err) {
                         reject(err);
+                        return;
                     }
                     if (response.statusCode == 200)
                         resolve(httpResponse.statusCode);
@@ -349,11 +359,40 @@ class cluster {
     _buildFtsIndex(){
         return new Promise(
             (resolve, reject) => {
-                request({
-                    url: 'http://' + this.locals.endPointFts + '/api/index/' + this.locals.ftsIndex.name,
-                    method:'PUT',
-                    json: true,
-                    body: this.locals.ftsIndex,
+                this._verifyCouchbaseVersion().then((ver)=>{
+                    if(ver>=4.5){
+                        request({
+                            url: 'http://' + this.locals.endPointFts + '/api/index/' + this.locals.ftsIndex.name,
+                            method:'PUT',
+                            json: true,
+                            body: this.locals.ftsIndex,
+                            auth: {
+                                'user': this.locals.user,
+                                'pass': this.locals.password,
+                                'sendImmediately': true
+                            }
+                        }, (err, httpResponse, body) => {
+                            if (err) {
+                                reject(err);
+                                return;
+                            }
+                            console.log("  PROVISION FTS INDEX:", httpResponse.statusCode);
+                            resolve("ok");
+                        });
+                    }
+                    else {
+                        console.log("  PROVISION FTS INDEX: Skipping, Couchbase version is < 4.5");
+                        resolve("ok");
+                    }
+                });
+            });
+    }
+
+    _verifyCouchbaseVersion(){
+        return new Promise(
+            (resolve, reject)=> {
+                request.get({
+                    url: "http://" + this.locals.endPoint + "/pools",
                     auth: {
                         'user': this.locals.user,
                         'pass': this.locals.password,
@@ -361,10 +400,11 @@ class cluster {
                     }
                 }, (err, httpResponse, body) => {
                     if (err) {
-                        reject(err);
+                        resolve(false);
+                        return;
                     }
-                    console.log("  PROVISION FTS INDEX:", httpResponse.statusCode);
-                    resolve("ok");
+                    var ver = (JSON.parse(body).implementationVersion).split(".",2);
+                    resolve(parseFloat(ver[0]+"."+ver[1]));
                 });
             });
     }
