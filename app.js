@@ -18,8 +18,12 @@ bayeux.attach(server);
 server.listen(8000);
 
 //// ▶▶ uncaught exception - DEBUG only ◀◀ ////
+
 /*
  process.on('uncaughtException', function (err) {
- console.log('Caught exception: ' + err);
+     console.log('Caught exception: ' + err);
+     console.log('Please confirm the couchbase instance: ',config.couchbase.endPoint,
+         'is running and accessible. ');
+     process.exit();
  });
- */
+*/

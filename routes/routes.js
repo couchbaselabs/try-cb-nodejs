@@ -122,4 +122,17 @@ module.exports = function (app) {
         });
     });
 
+    //// ▶▶ verify environment and publish URL to console ◀◀ ////
+    db.query('SELECT NAME FROM system:keyspaces',function(err,result){
+       if(err){
+           console.log('Please confirm the couchbase instance:\n  ',config.couchbase.endPoint,
+               'Is running and accessible. ');
+           process.exit();
+       }
+        else{
+           console.log("ENVIRONMENT: READY--LOGIN AT:","http://" + config.application.hostName +
+               ":" + config.application.httpPort);
+       }
+    });
+
 }
