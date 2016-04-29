@@ -14,7 +14,7 @@ The steps below assume you are running a standalone couchbase instance running k
 
     **mkidr ~/try-cb
     git clone https://github.com/couchbaselabs/try-cb-nodejs.git ~/try-cb
-    cd ~/try-cb**
+    cd ~/try-cb**   
 
     **NOTE**:_The remainder of this step uses npm to "build" a cluster.  If you already have a configured instance of Couchbase Server, edit the "config.json file in the root of the cloned repository and change the username and password fields to match the credentials you entered when you setup couchbase. You can also skip the remainder of this step.  You can also configure the application to use a remote instance of couchbase or MDS by editing the endPoint, n1qlService and hostname fields.  For further information on MDS, refer to the Couchbase Documentation_
 
