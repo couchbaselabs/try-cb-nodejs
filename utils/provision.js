@@ -27,7 +27,7 @@ class cluster {
         locals.indexerStorageMode = config.couchbase.indexerStorageMode;
         locals.indexMemQuota = config.couchbase.indexMemQuota;
         locals.dataMemQuota = config.couchbase.dataMemQuota;
-        locals.ftsMemQuota = config.couchbase.ftsMemQuota;
+        locals.ftsMemQuota = config.couchbase.ftsMemoryQuota;
         locals.dataPath = config.couchbase.dataPath;
         locals.indexPath = config.couchbase.indexPath;
         locals.checkInterval = config.application.checkInterval;
@@ -35,6 +35,7 @@ class cluster {
         locals.finsihed = false;
         locals.currentCount = 0;
         locals.timerWait = "";
+        locals.instanceVersion=0;
 
         this._locals = locals;
     }
@@ -48,16 +49,15 @@ class cluster {
 
         // Provision promise chain sequence.  Without binding "this",
         //  scope is not preserved from the caller each time a new
-        //  promise is instantiated.  The final 3 functional calls are
-        //  is bound to the calling scope to have access to the
-        //  timer variable.
+        //  promise is instantiated.  
 
         this._verifyNodejsVersion(locals)
             .then(this._instanceExsists)
+            .then(this._verifyCouchbaseVersion.bind(this))
             .then(this._init)
             .then(this._rename)
             .then(this._storageMode)
-            .then(this._services)
+            .then(this._services.bind(this))
             .then(this._memory)
             .then(this._admin)
             .then(this._bucket)
@@ -75,6 +75,10 @@ class cluster {
 
     set _currentCount(count){
         this.locals.currentCount=count;
+    }
+
+    set _instanceVersion(version){
+        this.locals.instanceVersion=version;
     }
 
     set finished(currentState) {
@@ -164,10 +168,10 @@ class cluster {
         return new Promise(
             (resolve, reject) => {
                 var data = {
-                    services: 'kv,n1ql,index'
+                    services:'kv,n1ql,index'
                 };
 
-                if (locals.ftsMemQuota != "0") data["services"] += ",fts";
+                if (locals.ftsMemQuota != "0" && locals.instanceVersion>=4.5) data["services"] += ",fts";
 
                 request.post({
                     url: 'http://' + locals.endPoint + '/node/controller/setupServices',
@@ -177,7 +181,7 @@ class cluster {
                         reject(err);
                         return;
                     }
-                    console.log("  PROVISION SERVICE:", httpResponse.statusCode);
+                    console.log("  PROVISION SERVICES:", httpResponse.statusCode);
                     resolve(locals);
                 });
             });
@@ -191,7 +195,8 @@ class cluster {
                     memoryQuota: locals.dataMemQuota
                 };
 
-                if (locals.ftsMemQuota != "0") data["ftsMemoryQuota"] = locals.ftsMemQuota;
+                if (locals.ftsMemQuota != "0" && locals.instanceVersion>=4.5)
+                    data["ftsMemoryQuota"] = locals.ftsMemQuota;
 
                 request.post({
                     url: 'http://' + locals.endPoint + '/pools/default',
@@ -359,8 +364,7 @@ class cluster {
     _buildFtsIndex(){
         return new Promise(
             (resolve, reject) => {
-                this._verifyCouchbaseVersion().then((ver)=>{
-                    if(ver>=4.5){
+                    if(this.locals.instanceVersion>=4.5 && this.locals.ftsMemQuota!="0"){
                         request({
                             url: 'http://' + this.locals.endPointFts + '/api/index/' + this.locals.ftsIndex.name,
                             method:'PUT',
@@ -381,14 +385,14 @@ class cluster {
                         });
                     }
                     else {
-                        console.log("  PROVISION FTS INDEX: Skipping, Couchbase version is < 4.5");
+                        console.log("  PROVISION FTS INDEX: Skipping, CB version < 4.5 or ftsMemoryQuota = 0");
                         resolve("ok");
                     }
-                });
+
             });
     }
 
-    _verifyCouchbaseVersion(){
+    _verifyCouchbaseVersion(locals){
         return new Promise(
             (resolve, reject)=> {
                 request.get({
@@ -404,7 +408,8 @@ class cluster {
                         return;
                     }
                     var ver = (JSON.parse(body).implementationVersion).split(".",2);
-                    resolve(parseFloat(ver[0]+"."+ver[1]));
+                    this._instanceVersion=parseFloat(ver[0]+"."+ver[1]);
+                    resolve(locals);
                 });
             });
     }
