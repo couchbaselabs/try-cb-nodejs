@@ -49,7 +49,7 @@ class cluster {
 
         // Provision promise chain sequence.  Without binding "this",
         //  scope is not preserved from the caller each time a new
-        //  promise is instantiated.  
+        //  promise is instantiated.
 
         this._verifyNodejsVersion(locals)
             .then(this._instanceExsists)
@@ -121,6 +121,7 @@ class cluster {
                         return;
                     }
                     console.log("  PROVISION INITIALIZE SERVICES:", httpResponse.statusCode);
+                    if(httpResponse.statusCode!=200) console.log("    WARNING:",body);
                     resolve(locals);
                 });
             });
@@ -140,6 +141,7 @@ class cluster {
                         return;
                     }
                     console.log("  PROVISION RENAMING:", httpResponse.statusCode);
+                    if(httpResponse.statusCode!=200) console.log("    WARNING:",body);
                     resolve(locals);
                 });
             });
@@ -159,6 +161,7 @@ class cluster {
                         return;
                     }
                     console.log("  PROVISION INDEX STORAGE MODE:", httpResponse.statusCode);
+                    if(httpResponse.statusCode!=200) console.log("    WARNING:",body);
                     resolve(locals);
                 });
             });
@@ -182,6 +185,7 @@ class cluster {
                         return;
                     }
                     console.log("  PROVISION SERVICES:", httpResponse.statusCode);
+                    if(httpResponse.statusCode!=200) console.log("    WARNING:",body);
                     resolve(locals);
                 });
             });
@@ -207,6 +211,7 @@ class cluster {
                         return;
                     }
                     console.log("  PROVISION MEMORY:", httpResponse.statusCode);
+                    if(httpResponse.statusCode!=200) console.log("    WARNING:",body);
                     resolve(locals);
                 });
             });
@@ -228,6 +233,7 @@ class cluster {
                         return;
                     }
                     console.log("  PROVISION ADMIN USER:", httpResponse.statusCode);
+                    if(httpResponse.statusCode!=200) console.log("    WARNING:",body);
                     resolve(locals);
                 });
             });
@@ -381,6 +387,7 @@ class cluster {
                                 return;
                             }
                             console.log("  PROVISION FTS INDEX:", httpResponse.statusCode);
+                            if(httpResponse.statusCode!=200) console.log("    WARNING:",body);
                             resolve("ok");
                         });
                     }
