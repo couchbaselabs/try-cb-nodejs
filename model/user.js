@@ -1,4 +1,4 @@
-var db = require('./db');
+var db = require('./../utils/db');
 var ottoman = require('ottoman');
 ottoman.bucket = db.ODMBucket;
 var Flight=require('./flight');

@@ -2,14 +2,13 @@
 
 var bodyParser = require('body-parser');
 var http = require('http');
-var db = require('../model/db');
+var db = require('../utils/db');
 var airport=require('../model/airport');
 var flightPath=require('../model/flightPath');
-var rawImport=require('../model/raw/rawImport');
 var auth=require('../model/auth.js');
 var user=require('../model/user.js');
 var jwt = require('jsonwebtoken');
-var config = require('./../config');
+var config = require('./../utils/config');
 var sec=config.application.hashToken;
 
 //// ▶▶ application/json parser ◀◀ ////
@@ -123,17 +122,17 @@ module.exports = function (app) {
         });
     });
 
-    //// ▶▶ provision ◀◀ ////
-    app.post('/api/status/provisionCB',function(req,res){
-        rawImport.provisionCB(function(err,done){
-            if(err){
-                res.status=400;
-                res.send(err);
-                return;
-            }
-            res.status=202;
-            res.send(done);
-            return;
-        });
+    //// ▶▶ verify environment and publish URL to console ◀◀ ////
+    db.query('SELECT NAME FROM system:keyspaces',function(err,result){
+       if(err){
+           console.log('Please confirm the couchbase instance:\n  ',config.couchbase.endPoint,
+               'Is running and accessible. ');
+           process.exit();
+       }
+        else{
+           console.log("ENVIRONMENT: READY--LOGIN AT:","http://" + config.application.hostName +
+               ":" + config.application.httpPort);
+       }
     });
+
 }

@@ -1,6 +1,6 @@
-var db = require('./db');
+var db = require('./../utils/db');
 var jwt = require('jsonwebtoken');
-var config = require('./../config');
+var config = require('./../utils/config');
 var User = require('./user.js');
 var jwt = require('jsonwebtoken');
 var sec=config.application.hashToken;
