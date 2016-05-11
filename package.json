@@ -7,11 +7,12 @@
     "type": "git",
     "url": "git://github.com/ToddGreenstein/try-cb-nodejs.git"
   },
-  "license": "Apache2",
+  "license": "Apache-2.0",
   "author": {
     "name": "Todd Greenstein",
     "email": "todd@couchbase.com"
   },
+  "readme": "README.md",
   "dependencies": {
     "express": "*",
     "couchbase": "*",
