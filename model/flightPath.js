@@ -48,7 +48,7 @@ module.exports.findAll = function (from, to, leave, user, done) {
 
             queryPrep = "SELECT r.id, a.name, s.flight, s.utc, r.sourceairport, r.destinationairport, r.equipment " +
             "FROM `" + config.couchbase.bucket + "` r UNNEST r.schedule s JOIN `" +
-            config.couchbase.bucket + "` a ON KEYS r.airlineid WHERE r.sourceairport='" + queryFrom +
+            config.couchbase.bucket + "` a ON KEYS r.airlineid WHERE  r.type='route' AND r.sourceairport='" + queryFrom +
             "' AND r.destinationairport='" + queryTo + "' AND s.day=" + convDate(leave) + " ORDER BY a.name";
 
             db.query(queryPrep, user, function (err, flightPaths) {
