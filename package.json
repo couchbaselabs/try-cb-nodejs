@@ -1,0 +1,27 @@
+{
+  "name": "try-cb-node",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/couchbaselabs/try-cb-node"
+  },
+  "author": "Brett Lawson <brett19@gmail.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/couchbaselabs/try-cb-node/issues"
+  },
+  "homepage": "https://github.com/couchbaselabs/try-cb-node",
+  "dependencies": {
+    "body-parser": "~1.15.2",
+    "cors": "~2.8.1",
+    "couchbase": "~2.2.2",
+    "express": "~4.14.0",
+    "express-bearer-token": "~2.1.0",
+    "jsonwebtoken": "~7.1.9"
+  }
+}
