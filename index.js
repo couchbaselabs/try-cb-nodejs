@@ -22,8 +22,9 @@ function authUser(req, res, next) {
   bearerToken()(req, res, function() {
     jwt.verify(req.token, JWT_KEY, function(err, decoded) {
       if (err) {
-        req.status(400).send({
-            error: 'Invalid JWT token'
+        res.status(400).send({
+            error: 'Invalid JWT token',
+            cause: err
         });
         return;
       }
