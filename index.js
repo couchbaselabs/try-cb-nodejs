@@ -53,7 +53,7 @@ app.get('/api/airports', function(req, res) {
     qs = "SELECT airportname from `travel-sample` WHERE icao = '" + searchTerm.toUpperCase() + "';";
   } else {
     // Airport name
-    qs = "SELECT airportname from `travel-sample` WHERE airportname LIKE '%" + searchTerm + "';";
+    qs = "SELECT airportname from `travel-sample` WHERE LOWER(airportname) LIKE '%" + searchTerm.toLowerCase() + "%';";
   }
 
   var q = couchbase.N1qlQuery.fromString(qs);
