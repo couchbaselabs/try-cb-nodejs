@@ -20,7 +20,7 @@ The steps below assume you are running a standalone couchbase instance running k
 
     **npm run start**
 
- - [5] Open a browser and load the url http://localhost:3000
+ - [5] Open a browser and load the url http://localhost:8080
 
 ## REST API DOCUMENTATION
 The REST API for this example application can be found at:

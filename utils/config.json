@@ -1,0 +1,164 @@
+{
+    "couchbase": {
+        "endPoint": "localhost:8091",
+        "n1qlService": "localhost:8093",
+        "ftsService": "localhost:8094",
+        "hostName": "127.0.0.1",
+        "bucket": "travel-sample",
+        "user": "Administrator",
+        "password": "password",
+        "dataPath": "",
+        "indexPath": "",
+        "indexType": "gsi",
+        "indexerStorageMode":"forestdb",
+        "showQuery": false,
+        "indexMemQuota": 2048,
+        "dataMemQuota": 1024,
+        "ftsMemoryQuota":1024,
+        "thresholdItemCount": 31565,
+        "ftsIndex": {
+            "type": "fulltext-index",
+            "name": "hotels",
+            "sourceType": "couchbase",
+            "sourceName": "travel-sample",
+            "planParams": {
+                "maxPartitionsPerPIndex": 32,
+                "numReplicas": 0,
+                "hierarchyRules": null,
+                "nodePlanParams": null,
+                "pindexWeights": null,
+                "planFrozen": false
+            },
+            "params": {
+                "mapping": {
+                    "default_analyzer": "standard",
+                    "default_datetime_parser": "dateTimeOptional",
+                    "default_field": "_all",
+                    "default_mapping": {
+                        "display_order": "1",
+                        "dynamic": true,
+                        "enabled": false
+                    },
+                    "default_type": "_default",
+                    "index_dynamic": true,
+                    "store_dynamic": false,
+                    "type_field": "type",
+                    "types": {
+                        "hotel": {
+                            "display_order": "0",
+                            "dynamic": true,
+                            "enabled": true,
+                            "properties": {
+                                "city": {
+                                    "dynamic": false,
+                                    "enabled": true,
+                                    "fields": [
+                                        {
+                                            "analyzer": "",
+                                            "display_order": "2",
+                                            "include_in_all": true,
+                                            "include_term_vectors": true,
+                                            "index": true,
+                                            "name": "city",
+                                            "store": true,
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                "content": {
+                                    "dynamic": false,
+                                    "enabled": true,
+                                    "fields": [
+                                        {
+                                            "analyzer": "",
+                                            "display_order": "4",
+                                            "include_in_all": true,
+                                            "include_term_vectors": true,
+                                            "index": true,
+                                            "name": "content",
+                                            "store": true,
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                "name": {
+                                    "dynamic": false,
+                                    "enabled": true,
+                                    "fields": [
+                                        {
+                                            "analyzer": "",
+                                            "display_order": "0",
+                                            "include_in_all": true,
+                                            "include_term_vectors": true,
+                                            "index": true,
+                                            "name": "name",
+                                            "store": true,
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                "price": {
+                                    "dynamic": false,
+                                    "enabled": true,
+                                    "fields": [
+                                        {
+                                            "analyzer": "",
+                                            "display_order": "1",
+                                            "include_in_all": true,
+                                            "include_term_vectors": true,
+                                            "index": true,
+                                            "name": "price",
+                                            "store": true,
+                                            "type": "text"
+                                        }
+                                    ]
+                                },
+                                "reviews": {
+                                    "dynamic": false,
+                                    "enabled": true,
+                                    "fields": [
+                                        {
+                                            "analyzer": "",
+                                            "display_order": "3",
+                                            "include_in_all": true,
+                                            "include_term_vectors": true,
+                                            "index": true,
+                                            "name": "reviews",
+                                            "store": false,
+                                            "type": "text"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "store": {
+                    "kvStoreName": "forestdb"
+                }
+            },
+            "sourceParams": {
+                "clusterManagerBackoffFactor": 0,
+                "clusterManagerSleepInitMS": 0,
+                "clusterManagerSleepMaxMS": 2000,
+                "dataManagerBackoffFactor": 0,
+                "dataManagerSleepInitMS": 0,
+                "dataManagerSleepMaxMS": 2000,
+                "feedBufferAckThreshold": 0,
+                "feedBufferSizeBytes": 0
+            }
+        }
+    },
+    "application": {
+        "autoprovision": true,
+        "hostName": "localhost",
+        "httpPort": 3000,
+        "dataSource": "embedded",
+        "wait": 3000,
+        "checkInterval": 1000,
+        "verbose": false,
+        "distanceCostMultiplier": 0.1,
+        "avgKmHr": 800,
+        "hashToken": "UNSECURE_SECRET_TOKEN"
+    }
+}

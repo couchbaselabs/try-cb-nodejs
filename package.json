@@ -1,21 +1,20 @@
 {
-  "name": "try-cb-node",
+  "name": "try-cb",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Sample Application for Couchbase, Node.js, Angular and Express",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/couchbaselabs/try-cb-node"
+    "url": "https://github.com/couchbaselabs/try-cb-nodejs.git"
   },
   "author": "Brett Lawson <brett19@gmail.com>",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/couchbaselabs/try-cb-node/issues"
+    "url": "https://github.com/couchbaselabs/try-cb-nodejs/issues"
   },
-  "homepage": "https://github.com/couchbaselabs/try-cb-node",
+  "homepage": "https://github.com/couchbaselabs/try-cb-nodejs",
   "dependencies": {
     "body-parser": "~1.15.2",
     "cors": "~2.8.1",
@@ -23,5 +22,9 @@
     "express": "~4.14.0",
     "express-bearer-token": "~2.1.0",
     "jsonwebtoken": "~7.1.9"
+  },
+  "scripts": {
+      "build": "node utils/provision.js",
+      "start": "node index.js"
   }
 }
