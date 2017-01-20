@@ -14,7 +14,8 @@ The steps below assume you are running a standalone couchbase instance running k
 
     **mkidr ~/try-cb   
     git clone https://github.com/couchbaselabs/try-cb-nodejs.git ~/try-cb   
-    cd ~/try-cb**   
+    cd ~/try-cb
+    npm install**   
 
  4. Start the application.  From a terminal:
 
