@@ -338,7 +338,7 @@ app.get('/api/hotel/:description/:location', function(req, res) {
         ));
   }
 
-  var q = couchbase.SearchQuery.new('travel-search', qp)
+  var q = couchbase.SearchQuery.new('hotels', qp)
       .limit(100);
 
   bucket.query(q, function(err, rows) {
