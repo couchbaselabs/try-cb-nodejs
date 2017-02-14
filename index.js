@@ -315,7 +315,7 @@ app.post('/api/user/:username/flights', authUser, function(req, res) {
   });
 });
 
-app.get('/api/hotel/:description/:location', function(req, res) {
+app.get('/api/hotel/:description/:location?', function(req, res) {
   var description = req.params.description;
   var location = req.params.location;
 
@@ -345,6 +345,14 @@ app.get('/api/hotel/:description/:location', function(req, res) {
     if (err) {
       res.status(500).send({
         error: err
+      });
+      return;
+    }
+
+    if (rows.length === 0) {
+      res.send({
+        data: [],
+        context: []
       });
       return;
     }
