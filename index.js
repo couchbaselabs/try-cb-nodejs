@@ -13,6 +13,9 @@ var JWT_KEY = 'IAMSOSECRETIVE!';
 // Create a Couchbase Cluster connection
 var cluster = new couchbase.Cluster('couchbase://localhost');
 
+// Authenticate with the cluster
+cluster.authenticate('Administrator', 'password');
+
 // Open a specific Couchbase bucket, `travel-sample` in this case.
 var bucket = cluster.openBucket('travel-sample');
 
