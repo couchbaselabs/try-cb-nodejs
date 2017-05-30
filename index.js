@@ -7,15 +7,21 @@ var couchbase = require('couchbase');
 var express = require('express');
 var jwt = require('jsonwebtoken');
 
+// Specify a key for JWT signing.
 var JWT_KEY = 'IAMSOSECRETIVE!';
 
+// Create a Couchbase Cluster connection
 var cluster = new couchbase.Cluster('couchbase://localhost');
+
+// Open a specific Couchbase bucket, `travel-sample` in this case.
 var bucket = cluster.openBucket('travel-sample');
 
+// Set up our express application
 var app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
+// Serve the public directory to the root of the web server.
 app.use(express.static('public'));
 
 function authUser(req, res, next) {
