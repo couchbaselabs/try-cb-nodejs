@@ -17,7 +17,14 @@ var cluster = new couchbase.Cluster('couchbase://localhost');
 cluster.authenticate('Administrator', 'password');
 
 // Open a specific Couchbase bucket, `travel-sample` in this case.
-var bucket = cluster.openBucket('travel-sample');
+var bucket = cluster.openBucket('travel-sample', function(err) {
+  if (err) {
+    console.log('Bucket connection failed', err);
+    return;
+  }
+
+  console.log('Connected to Couchbase!');
+});
 
 // Set up our express application
 var app = express();
