@@ -297,7 +297,7 @@ app.post('/api/user/:username/flights', authUser, function(req, res) {
 
     doc.value.flights  = doc.value.flights.concat(flights);
 
-    bucket.replace(userDocKey, {cas: doc.cas}, doc.value, function(err, res) {
+    bucket.replace(userDocKey, doc.value, {cas: doc.cas}, function(err, success) {
       if (err) {
         res.status(500).send({
           error: err
