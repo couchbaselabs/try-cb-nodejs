@@ -36,6 +36,8 @@ app.use(express.static('public'));
 
 function authUser(req, res, next) {
   bearerToken()(req, res, function() {
+    // Temporary Hack to extract the token from the request
+    req.token = req.headers.authentication.split(" ")[1]
     jwt.verify(req.token, JWT_KEY, function(err, decoded) {
       if (err) {
         res.status(400).send({
@@ -313,7 +315,7 @@ app.post('/api/user/:username/flights', authUser, function(req, res) {
 
     doc.value.flights  = doc.value.flights.concat(flights);
 
-    bucket.replace(userDocKey, {cas: doc.cas}, doc.value, function(err, res) {
+    bucket.replace(userDocKey, doc.value, {cas:doc.cas}, function(err, result) {
       if (err) {
         res.status(500).send({
           error: err

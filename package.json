@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "description": "Sample Application for Couchbase, Node.js, Angular and Express",
   "scripts": {
+    "build": "node utils/provision.js",
+    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -16,15 +18,11 @@
   },
   "homepage": "https://github.com/couchbaselabs/try-cb-nodejs",
   "dependencies": {
-    "body-parser": "~1.15.2",
+    "body-parser": "^1.19.0",
     "cors": "~2.8.1",
-    "couchbase": "~2.3.3",
-    "express": "~4.14.0",
+    "couchbase": "~2.6.4",
+    "express": "^4.17.1",
     "express-bearer-token": "~2.1.0",
     "jsonwebtoken": "~7.1.9"
-  },
-  "scripts": {
-      "build": "node utils/provision.js",
-      "start": "node index.js"
   }
 }
