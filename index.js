@@ -11,20 +11,15 @@ var jwt = require('jsonwebtoken');
 var JWT_KEY = 'IAMSOSECRETIVE!';
 
 // Create a Couchbase Cluster connection
-var cluster = new couchbase.Cluster('couchbase://localhost');
-
-// Authenticate with the cluster
-cluster.authenticate('Administrator', 'password');
+var cluster = new couchbase.Cluster('couchbase://localhost', {
+  username: 'Administrator',
+  password: 'password'
+});
 
 // Open a specific Couchbase bucket, `travel-sample` in this case.
-var bucket = cluster.openBucket('travel-sample', function(err) {
-  if (err) {
-    console.log('Bucket connection failed', err);
-    return;
-  }
-
-  console.log('Connected to Couchbase!');
-});
+var bucket = cluster.bucket('travel-sample');
+// And select the default collection
+var coll = bucket.defaultCollection();
 
 // Set up our express application
 var app = express();
@@ -57,7 +52,7 @@ app.get('/', function (req, res) {
   res.send('Hello World!');
 });
 
-app.get('/api/airports', function(req, res) {
+app.get('/api/airports', async function(req, res) {
   var searchTerm = req.query.search;
 
   var qs;
@@ -74,23 +69,16 @@ app.get('/api/airports', function(req, res) {
     qs = "SELECT airportname from `travel-sample` WHERE LOWER(airportname) LIKE '%" + searchTerm.toLowerCase() + "%';";
   }
 
-  var q = couchbase.N1qlQuery.fromString(qs);
-  bucket.query(q, function(err, rows) {
-    if (err) {
-      res.status(500).send({
-        error: err
-      });
-      return;
-    }
+  let result = await coll.query(qs);
+  let rows = result.rows;
 
-    res.send({
-      data: rows,
-      context: [qs]
-    });
+  res.send({
+    data: rows,
+    context: [qs]
   });
 });
 
-app.get('/api/flightPaths/:from/:to', function(req, res) {
+app.get('/api/flightPaths/:from/:to', async function(req, res) {
   var fromAirport = req.params.from;
   var toAirport = req.params.to;
   var leaveDate = new Date(req.query.leave);
@@ -105,67 +93,53 @@ app.get('/api/flightPaths/:from/:to', function(req, res) {
       " SELECT faa AS toAirport" +
       " FROM `travel-sample`" +
       " WHERE airportname = '" + toAirport + "';";
-  var q = couchbase.N1qlQuery.fromString(qs1);
-  bucket.query(q, function(err, rows) {
-    if (err) {
-      res.status(500).send({
-        error: err,
-        context: [qs1]
-      });
-      return;
-    }
 
-    if (rows.length !== 2) {
-      res.status(404).send({
-        error: "One of the specified airports is invalid.",
-        context: [qs1]
-      });
-      return;
-    }
+  let result = await coll.query(qs1).catch(err => console.log(err));
+  let rows = result.rows;
 
-    var toFaa = rows[0].toAirport;
-    var fromFaa = rows[1].fromAirport;
-
-    var qs2 =
-        " SELECT a.name, s.flight, s.utc, r.sourceairport, r.destinationairport, r.equipment" +
-        " FROM `travel-sample` AS r" +
-        " UNNEST r.schedule AS s" +
-        " JOIN `travel-sample` AS a ON KEYS r.airlineid" +
-        " WHERE r.sourceairport = '" + fromFaa + "'" +
-        " AND r.destinationairport = '" + toFaa + "'" +
-        " AND s.day = " + dayOfWeek +
-        " ORDER BY a.name ASC;";
-
-    var q = couchbase.N1qlQuery.fromString(qs2);
-    bucket.query(q, function(err, rows) {
-      if (err) {
-        res.status(500).send({
-          error: err,
-          context: [qs1, qs2]
-        });
-        return;
-      }
-
-      if (rows.length === 0) {
-        res.status(404).send({
-          error: "No flights exist between these airports.",
-          context: [qs1, qs2]
-        });
-        return;
-      }
-
-      for (var i = 0; i < rows.length; ++i) {
-        rows[i].flighttime = Math.ceil(Math.random() * 8000);
-        rows[i].price = Math.ceil(rows[i].flighttime / 8 * 100) / 100;
-      }
-
-      res.send({
-        data: rows,
-        context: [qs1, qs2]
-      });
+  if (rows.length !== 2) {
+    res.status(404).send({
+      error: "One of the specified airports is invalid.",
+      context: [qs1]
     });
-  })
-});;
+    return;
+  }
+
+  var fromFaa = rows[0].fromAirport || rows[1].fromAirport;
+  var toFaa = rows[0].toAirport || rows[1].toAirport;
+
+  var qs2 =
+      " SELECT a.name, s.flight, s.utc, r.sourceairport, r.destinationairport, r.equipment" +
+      " FROM `travel-sample` AS r" +
+      " UNNEST r.schedule AS s" +
+      " JOIN `travel-sample` AS a ON KEYS r.airlineid" +
+      " WHERE r.sourceairport = '" + fromFaa + "'" +
+      " AND r.destinationairport = '" + toFaa + "'" +
+      " AND s.day = " + dayOfWeek +
+      " ORDER BY a.name ASC;";
+
+  result = await coll.query(qs2);
+
+  if (result.rows.length === 0) {
+    res.status(404).send({
+      error: "No flights exist between these airports.",
+      context: [qs1, qs2]
+    });
+    return;
+  }
+
+  rows = result.rows
+
+  for (var i = 0; i < rows.length; ++i) {
+    rows[i].flighttime = Math.ceil(Math.random() * 8000);
+    rows[i].price = Math.ceil(rows[i].flighttime / 8 * 100) / 100;
+  }
+
+  res.send({
+    data: rows,
+    context: [qs1, qs2]
+  });
+});
 
 app.post('/api/user/login', function(req, res) {
   var user = req.body.user;
@@ -173,7 +147,7 @@ app.post('/api/user/login', function(req, res) {
 
   var userDocKey = 'user::' + user;
 
-  bucket.get(userDocKey, function(err, doc) {
+  coll.get(userDocKey, function(err, doc) {
     if (err) {
       if (err === couchbase.errors.KEY_ENOENT) {
         res.status(401).send({
@@ -218,7 +192,7 @@ app.post('/api/user/signup', function(req, res) {
     flights: []
   };
 
-  bucket.insert(userDocKey, userDoc, function(err, doc) {
+  coll.insert(userDocKey, userDoc, function(err, doc) {
     if (err) {
       if (err === couchbase.errors.KEY_EEXISTS) {
         res.status(409).send({
@@ -257,7 +231,7 @@ app.get('/api/user/:username/flights', authUser, function(req, res) {
   }
 
   var userDocKey = 'user::' + username;
-  bucket.get(userDocKey, function(err, doc) {
+  coll.get(userDocKey, function(err, doc) {
     if (err) {
       if (err == couchbase.errors.KEY_ENOENT) {
         res.status(403).send({
@@ -294,7 +268,7 @@ app.post('/api/user/:username/flights', authUser, function(req, res) {
   }
 
   var userDocKey = 'user::' + username;
-  bucket.get(userDocKey, function(err, doc) {
+  coll.get(userDocKey, function(err, doc) {
     if (err) {
       if (err == couchbase.errors.KEY_ENOENT) {
         res.status(403).send({
@@ -315,7 +289,7 @@ app.post('/api/user/:username/flights', authUser, function(req, res) {
 
     doc.value.flights  = doc.value.flights.concat(flights);
 
-    bucket.replace(userDocKey, doc.value, {cas:doc.cas}, function(err, result) {
+    coll.replace(userDocKey, doc.value, {cas:doc.cas}, function(err, result) {
       if (err) {
         res.status(500).send({
           error: err
@@ -337,29 +311,29 @@ app.get('/api/hotel/:description/:location?', function(req, res) {
   var description = req.params.description;
   var location = req.params.location;
 
-  var qp = couchbase.SearchQuery.conjuncts(couchbase.SearchQuery.term('hotel').field('type'));
+  var qp = couchbase.SearchQuery.conjuncts([couchbase.SearchQuery.term('hotel').field('type')]);
 
   if (location && location !== '*') {
     qp.and(couchbase.SearchQuery.disjuncts(
-        couchbase.SearchQuery.matchPhrase(location).field("country"),
-        couchbase.SearchQuery.matchPhrase(location).field("city"),
-        couchbase.SearchQuery.matchPhrase(location).field("state"),
-        couchbase.SearchQuery.matchPhrase(location).field("address")
+        couchbase.SearchQuery.match(location).field("country"),
+        couchbase.SearchQuery.match(location).field("city"),
+        couchbase.SearchQuery.match(location).field("state"),
+        couchbase.SearchQuery.match(location).field("address")
     ));
   }
 
   if (description && description !== '*') {
     qp.and(
         couchbase.SearchQuery.disjuncts(
-            couchbase.SearchQuery.matchPhrase(description).field("description"),
-            couchbase.SearchQuery.matchPhrase(description).field("name")
+            couchbase.SearchQuery.match(description).field("description"),
+            couchbase.SearchQuery.match(description).field("name")
         ));
   }
 
   var q = couchbase.SearchQuery.new('hotels', qp)
       .limit(100);
 
-  bucket.query(q, function(err, rows) {
+  coll.query(q, function(err, rows) {
     if (err) {
       res.status(500).send({
         error: err
@@ -380,7 +354,7 @@ app.get('/api/hotel/:description/:location?', function(req, res) {
     var totalHandled = 0;
     for (var i = 0; i < rows.length; ++i) {
       (function(row) {
-        bucket.lookupIn(row.id)
+        coll.lookupIn(row.id)
             .get('country')
             .get('city')
             .get('state')

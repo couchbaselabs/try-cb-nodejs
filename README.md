@@ -6,20 +6,22 @@ A sample application and dataset for getting started with Couchbase 4.5 or later
 ## Installation and Configuration
 The steps below assume you are running a standalone couchbase instance running kv, indexing, fts (in Couchbase 4.5 or later) and query services on the same server where the node application will also be running.
 
- 1. Install a Couchbase Server, and start it.
+ 1. Install a Couchbase Server, start it and load the `travel-sample` bucket.
+    * If you want to use Full-Text Search, create an FTS index called `hotels` over all documents of type `hotel`
  
  2. Install Node.js
 
  3. Make a directory, clone this repo, install dependencies, start the application.  From a terminal:
 
-    **mkdir ~/try-cb   
+    ```bash
+    mkdir ~/try-cb   
     git clone https://github.com/couchbaselabs/try-cb-nodejs.git ~/try-cb   
     cd ~/try-cb   
-    npm install**   
-
+    npm install
+    ```
  4. Start the application.  From a terminal:
 
-    **npm run start**
+    `npm run start`
 
  5. Open a browser and load the url http://localhost:8080
 
