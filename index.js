@@ -6,12 +6,13 @@ var cors = require('cors');
 var couchbase = require('couchbase');
 var express = require('express');
 var jwt = require('jsonwebtoken');
+const uuidv4 = require('uuid/v4');
 
 // Specify a key for JWT signing.
 var JWT_KEY = 'IAMSOSECRETIVE!';
 
 // Create a Couchbase Cluster connection
-var cluster = new couchbase.Cluster('couchbase://localhost', {
+var cluster = new couchbase.Cluster('couchbase://10.112.195.101', {
   username: 'Administrator',
   password: 'password'
 });
@@ -20,6 +21,12 @@ var cluster = new couchbase.Cluster('couchbase://localhost', {
 var bucket = cluster.bucket('travel-sample');
 // And select the default collection
 var coll = bucket.defaultCollection();
+
+// Open users bucket, with scope and specific collections
+var userBucket = cluster.bucket("travel-users");
+var userScope = userBucket.scope("userData");
+var userColl = userScope.collection("users");
+var flightColl = userScope.collection("flights");
 
 // Set up our express application
 var app = express();
@@ -68,8 +75,7 @@ app.get('/api/airports', async function(req, res) {
     // Airport name
     qs = "SELECT airportname from `travel-sample` WHERE LOWER(airportname) LIKE '%" + searchTerm.toLowerCase() + "%';";
   }
-
-  let result = await coll.query(qs);
+  let result = await cluster.query(qs);
   let rows = result.rows;
 
   res.send({
@@ -94,7 +100,7 @@ app.get('/api/flightPaths/:from/:to', async function(req, res) {
       " FROM `travel-sample`" +
       " WHERE airportname = '" + toAirport + "';";
 
-  let result = await coll.query(qs1).catch(err => console.log(err));
+  let result = await cluster.query(qs1).catch(err => console.log(err));
   let rows = result.rows;
 
   if (rows.length !== 2) {
@@ -118,7 +124,7 @@ app.get('/api/flightPaths/:from/:to', async function(req, res) {
       " AND s.day = " + dayOfWeek +
       " ORDER BY a.name ASC;";
 
-  result = await coll.query(qs2);
+  result = await cluster.query(qs2);
 
   if (result.rows.length === 0) {
     res.status(404).send({
@@ -145,9 +151,9 @@ app.post('/api/user/login', function(req, res) {
   var user = req.body.user;
   var password = req.body.password;
 
-  var userDocKey = 'user::' + user;
+  var userDocKey = user;
 
-  coll.get(userDocKey, function(err, doc) {
+  userColl.get(userDocKey, function(err, doc) {
     if (err) {
       if (err === couchbase.errors.KEY_ENOENT) {
         res.status(401).send({
@@ -185,16 +191,17 @@ app.post('/api/user/signup', function(req, res) {
   var user = req.body.user;
   var password = req.body.password;
 
-  var userDocKey = 'user::' + user;
+  var userDocKey = user;
   var userDoc = {
     name: user,
     password: password,
     flights: []
   };
 
-  coll.insert(userDocKey, userDoc, function(err, doc) {
+  userColl.insert(userDocKey, userDoc, function(err, doc) {
+    console.log(err)
     if (err) {
-      if (err === couchbase.errors.KEY_EEXISTS) {
+      if (err.code == 12) { // Key exists error
         res.status(409).send({
           error: 'User already exists.'
         });
@@ -230,8 +237,8 @@ app.get('/api/user/:username/flights', authUser, function(req, res) {
     return;
   }
 
-  var userDocKey = 'user::' + username;
-  coll.get(userDocKey, function(err, doc) {
+  var userDocKey = username;
+  userColl.get(userDocKey, async function(err, doc) {
     if (err) {
       if (err == couchbase.errors.KEY_ENOENT) {
         res.status(403).send({
@@ -250,8 +257,14 @@ app.get('/api/user/:username/flights', authUser, function(req, res) {
       doc.value.flights = [];
     }
 
+    let flights = []
+    for(let flightID of doc.value.flights){
+      let flight = await flightColl.get(flightID)
+      flights.push(flight.value)
+    }
+
     res.send({
-      data: doc.value.flights
+      data: flights
     })
   });
 });
@@ -267,8 +280,8 @@ app.post('/api/user/:username/flights', authUser, function(req, res) {
     return;
   }
 
-  var userDocKey = 'user::' + username;
-  coll.get(userDocKey, function(err, doc) {
+  var userDocKey = username;
+  userColl.get(userDocKey, function(err, doc) {
     if (err) {
       if (err == couchbase.errors.KEY_ENOENT) {
         res.status(403).send({
@@ -286,10 +299,17 @@ app.post('/api/user/:username/flights', authUser, function(req, res) {
     if (!doc.value.flights) {
       doc.value.flights = [];
     }
+    
+    let flightIDs = [];
+    for(let flight of flights){
+      let ID = uuidv4()
+      flightIDs.push(ID)
+      flightColl.insert(ID, flight)
+    }
 
-    doc.value.flights  = doc.value.flights.concat(flights);
+    doc.value.flights  = doc.value.flights.concat(flightIDs);
 
-    coll.replace(userDocKey, doc.value, {cas:doc.cas}, function(err, result) {
+    userColl.replace(userDocKey, doc.value, {cas:doc.cas}, function(err, result) {
       if (err) {
         res.status(500).send({
           error: err
@@ -311,7 +331,7 @@ app.get('/api/hotel/:description/:location?', function(req, res) {
   var description = req.params.description;
   var location = req.params.location;
 
-  var qp = couchbase.SearchQuery.conjuncts([couchbase.SearchQuery.term('hotel').field('type')]);
+  var qp = couchbase.ConjunctionQuery([couchbase('hotel').field('type')]);
 
   if (location && location !== '*') {
     qp.and(couchbase.SearchQuery.disjuncts(
@@ -333,7 +353,7 @@ app.get('/api/hotel/:description/:location?', function(req, res) {
   var q = couchbase.SearchQuery.new('hotels', qp)
       .limit(100);
 
-  coll.query(q, function(err, rows) {
+  cluster.query(q, function(err, rows) {
     if (err) {
       res.status(500).send({
         error: err
