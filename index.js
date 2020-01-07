@@ -63,12 +63,11 @@ app.get('/api/airports', async function(req, res) {
   var searchTerm = req.query.search;
 
   var qs;
-  if (searchTerm.length === 3) {
+  let sameCase = (searchTerm.toUpperCase() === searchTerm ||searchTerm.toLowerCase() === searchTerm)
+  if (sameCase && searchTerm.length === 3) {
     // FAA code
     qs = "SELECT airportname from `travel-sample` WHERE faa = '" + searchTerm.toUpperCase() + "';";
-  } else if (searchTerm.length === 4 &&
-      (searchTerm.toUpperCase() === searchTerm ||
-        searchTerm.toLowerCase() === searchTerm)) {
+  } else if (sameCase && searchTerm.length === 4) {
     // ICAO code
     qs = "SELECT airportname from `travel-sample` WHERE icao = '" + searchTerm.toUpperCase() + "';";
   } else {
