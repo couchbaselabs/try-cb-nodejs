@@ -4,6 +4,7 @@ var bearerToken = require('express-bearer-token');
 var bodyParser = require('body-parser');
 var cors = require('cors');
 var couchbase = require('couchbase');
+var fts = require('couchbase/lib/searchquery');
 var express = require('express');
 var jwt = require('jsonwebtoken');
 const uuidv4 = require('uuid/v4');
@@ -39,7 +40,7 @@ app.use(express.static('public'));
 function authUser(req, res, next) {
   bearerToken()(req, res, function() {
     // Temporary Hack to extract the token from the request
-    req.token = req.headers.authentication.split(" ")[1]
+    req.token = req.headers.authorization.split(" ")[1]
     jwt.verify(req.token, JWT_KEY, function(err, decoded) {
       if (err) {
         res.status(400).send({
@@ -330,29 +331,32 @@ app.get('/api/hotel/:description/:location?', function(req, res) {
   var description = req.params.description;
   var location = req.params.location;
 
-  var qp = couchbase.ConjunctionQuery([couchbase('hotel').field('type')]);
+  // FTS query
+
+  var qp = fts.conjuncts([fts.term('hotel').field('type')]);
 
   if (location && location !== '*') {
-    qp.and(couchbase.SearchQuery.disjuncts(
-        couchbase.SearchQuery.match(location).field("country"),
-        couchbase.SearchQuery.match(location).field("city"),
-        couchbase.SearchQuery.match(location).field("state"),
-        couchbase.SearchQuery.match(location).field("address")
+    qp.and(fts.disjuncts(
+        fts.match(location).field("country"),
+        fts.match(location).field("city"),
+        fts.match(location).field("state"),
+        fts.match(location).field("address")
     ));
   }
 
   if (description && description !== '*') {
     qp.and(
-        couchbase.SearchQuery.disjuncts(
-            couchbase.SearchQuery.match(description).field("description"),
-            couchbase.SearchQuery.match(description).field("name")
+        fts.disjuncts(
+            fts.match(description).field("description"),
+            fts.match(description).field("name")
         ));
   }
 
-  var q = couchbase.SearchQuery.new('hotels', qp)
-      .limit(100);
+  // This syntax may be subject to change
+  var q = new fts('hotels', qp)
 
-  cluster.query(q, function(err, rows) {
+  // Execute Query
+  cluster.searchQuery(q, {limit: 100}, function(err, rows) {
     if (err) {
       res.status(500).send({
         error: err
@@ -360,59 +364,37 @@ app.get('/api/hotel/:description/:location?', function(req, res) {
       return;
     }
 
-    if (rows.length === 0) {
+    if (!rows.rows || rows.rows.length === 0) {
       res.send({
         data: [],
         context: []
       });
       return;
     }
-
+    // Subdoc to get data from the hotels we found
+    var fields = ['country', 'city', 'state', 'address', 'name', 'description']
     var results = [];
-
     var totalHandled = 0;
-    for (var i = 0; i < rows.length; ++i) {
+    for (var i = 0; i < rows.rows.length; ++i) {
+      // Use function so subdoc ops run in parallel
       (function(row) {
-        coll.lookupIn(row.id)
-            .get('country')
-            .get('city')
-            .get('state')
-            .get('address')
-            .get('name')
-            .get('description')
-            .execute(function (err, docFrag) {
-              if (totalHandled === -1) {
-                return;
-              }
-
-              var doc = {};
-
-              try {
-                doc.country = docFrag.content('country');
-                doc.city = docFrag.content('city');
-                doc.state = docFrag.content('state');
-                doc.address = docFrag.content('address');
-                doc.name = docFrag.content('name');
-              } catch (e) { }
-
-              // This is in a separate block since some versions of the
-              //  travel-sample data set do not contain a description.
-              try {
-                doc.description = docFrag.content('description');
-              } catch (e) { }
-
-              results.push(doc);
-
-              totalHandled++;
-
-              if (totalHandled >= rows.length) {
-                res.send({
-                  data: results,
-                  context: []
-                });
-              }
-            });
-      })(rows[i]);
+        coll.lookupIn(row.id, fields.map(x => couchbase.LookupInSpec.get(x)), 
+          function (err, docFrag) {
+            if (totalHandled === -1) {
+              return;
+            }
+            var doc = {}
+            docFrag.results.forEach((field, i) => doc[fields[i]] = field.value)
+            results.push(doc);
+            totalHandled++;
+            if (totalHandled >= rows.rows.length) {
+              res.send({
+                data: results,
+                context: []
+              });
+            }
+        });
+      })(rows.rows[i]);
     }
   });
 });
