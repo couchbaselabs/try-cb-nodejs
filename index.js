@@ -13,7 +13,7 @@ const uuidv4 = require('uuid/v4');
 var JWT_KEY = 'IAMSOSECRETIVE!';
 
 // Create a Couchbase Cluster connection
-var cluster = new couchbase.Cluster('couchbase://10.112.195.101', {
+var cluster = new couchbase.Cluster('couchbase://localhost', {
   username: 'Administrator',
   password: 'password'
 });
