@@ -69,7 +69,7 @@ app.get('/api/airports', async function(req, res) {
     qs = "SELECT airportname from `travel-sample` WHERE LOWER(airportname) LIKE '%" + searchTerm.toLowerCase() + "%';";
   }
 
-  let result = await coll.query(qs);
+  let result = await cluster.query(qs).catch(err => console.log(err));
   let rows = result.rows;
 
   res.send({
@@ -94,7 +94,7 @@ app.get('/api/flightPaths/:from/:to', async function(req, res) {
       " FROM `travel-sample`" +
       " WHERE airportname = '" + toAirport + "';";
 
-  let result = await coll.query(qs1).catch(err => console.log(err));
+  let result = await cluster.query(qs1).catch(err => console.log(err));
   let rows = result.rows;
 
   if (rows.length !== 2) {
@@ -118,7 +118,8 @@ app.get('/api/flightPaths/:from/:to', async function(req, res) {
       " AND s.day = " + dayOfWeek +
       " ORDER BY a.name ASC;";
 
-  result = await coll.query(qs2);
+  //console.log(qs2);
+  result = await cluster.query(qs2).catch(err => console.log(err));;
 
   if (result.rows.length === 0) {
     res.status(404).send({
@@ -333,7 +334,7 @@ app.get('/api/hotel/:description/:location?', function(req, res) {
   var q = couchbase.SearchQuery.new('hotels', qp)
       .limit(100);
 
-  coll.query(q, function(err, rows) {
+  cluster.searchQuery(q, function(err, rows) {
     if (err) {
       res.status(500).send({
         error: err
