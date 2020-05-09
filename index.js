@@ -58,19 +58,24 @@ app.get('/api/airports', async function(req, res) {
   var qs;
   if (searchTerm.length === 3) {
     // FAA code
-    qs = "SELECT airportname from `travel-sample` WHERE faa = '" + searchTerm.toUpperCase() + "';";
+    qs = `SELECT airportname from \`travel-sample\` WHERE faa = '${searchTerm.toUpperCase()}';`;
   } else if (searchTerm.length === 4 &&
       (searchTerm.toUpperCase() === searchTerm ||
         searchTerm.toLowerCase() === searchTerm)) {
     // ICAO code
-    qs = "SELECT airportname from `travel-sample` WHERE icao = '" + searchTerm.toUpperCase() + "';";
+    qs = `SELECT airportname from \`travel-sample\` WHERE icao = '${searchTerm.toUpperCase()}';`;
   } else {
     // Airport name
-    qs = "SELECT airportname from `travel-sample` WHERE LOWER(airportname) LIKE '%" + searchTerm.toLowerCase() + "%';";
+    qs = `SELECT airportname from \`travel-sample\` WHERE LOWER(airportname) LIKE '%${searchTerm.toLowerCase()}%';`;
   }
 
-  let result = await coll.query(qs);
-  let rows = result.rows;
+  let result, rows;
+  try {
+    result = await cluster.query(qs);
+    rows = result.rows;
+  } catch (error) {
+    console.error(error)
+  };
 
   res.send({
     data: rows,
@@ -85,17 +90,19 @@ app.get('/api/flightPaths/:from/:to', async function(req, res) {
 
   var dayOfWeek = leaveDate.getDay();
 
-  var qs1 =
-      "SELECT faa AS fromAirport" +
-      " FROM `travel-sample`" +
-      " WHERE airportname = '" + fromAirport + "'" +
-      " UNION" +
-      " SELECT faa AS toAirport" +
-      " FROM `travel-sample`" +
-      " WHERE airportname = '" + toAirport + "';";
+  var qs1 =`
+    SELECT faa AS fromAirport FROM \`travel-sample\` WHERE airportname = '${fromAirport}' 
+    UNION 
+    SELECT faa AS toAirport FROM \`travel-sample\` WHERE airportname = '${toAirport}';
+  `;
 
-  let result = await coll.query(qs1).catch(err => console.log(err));
-  let rows = result.rows;
+  let result, rows;
+  try {
+    result = await cluster.query(qs1)
+    rows = result.rows;
+  } catch (error) {
+    console.error(error)
+  };
 
   if (rows.length !== 2) {
     res.status(404).send({
@@ -108,17 +115,19 @@ app.get('/api/flightPaths/:from/:to', async function(req, res) {
   var fromFaa = rows[0].fromAirport || rows[1].fromAirport;
   var toFaa = rows[0].toAirport || rows[1].toAirport;
 
-  var qs2 =
-      " SELECT a.name, s.flight, s.utc, r.sourceairport, r.destinationairport, r.equipment" +
-      " FROM `travel-sample` AS r" +
-      " UNNEST r.schedule AS s" +
-      " JOIN `travel-sample` AS a ON KEYS r.airlineid" +
-      " WHERE r.sourceairport = '" + fromFaa + "'" +
-      " AND r.destinationairport = '" + toFaa + "'" +
-      " AND s.day = " + dayOfWeek +
-      " ORDER BY a.name ASC;";
+  var qs2 =`
+    SELECT a.name, s.flight, s.utc, r.sourceairport, r.destinationairport, r.equipment 
+    FROM \`travel-sample\` AS r UNNEST r.schedule AS s 
+    JOIN \`travel-sample\` AS a ON KEYS r.airlineid 
+    WHERE r.sourceairport = '${fromFaa}' AND r.destinationairport = '${toFaa}' AND s.day = ${dayOfWeek} 
+    ORDER BY a.name ASC;
+  `;
 
-  result = await coll.query(qs2);
+  try {
+    result = await cluster.query(qs2);
+  } catch (error) {
+    console.error(error)
+  };
 
   if (result.rows.length === 0) {
     res.status(404).send({
@@ -307,7 +316,7 @@ app.post('/api/user/:username/flights', authUser, function(req, res) {
   });
 });
 
-app.get('/api/hotel/:description/:location?', function(req, res) {
+app.get('/api/hotel/:description/:location?', async function(req, res) {
   var description = req.params.description;
   var location = req.params.location;
 
@@ -333,7 +342,7 @@ app.get('/api/hotel/:description/:location?', function(req, res) {
   var q = couchbase.SearchQuery.new('hotels', qp)
       .limit(100);
 
-  coll.query(q, function(err, rows) {
+  await cluster.searchQuery(q, function(err, rows) {
     if (err) {
       res.status(500).send({
         error: err
