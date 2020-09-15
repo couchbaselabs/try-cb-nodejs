@@ -177,7 +177,7 @@ app.post('/api/user/login', async (req, res) => {
       },
     });
   } catch (err) {
-    if (err instanceof couchbase.errors.DocumentNotFoundError) {
+    if (err instanceof couchbase.DocumentNotFoundError) {
       res.status(401).send({
         error: 'User does not exist.',
       });
@@ -216,7 +216,7 @@ app.post('/api/user/signup', async (req, res) => {
       context: ['created document ' + userDocKey],
     });
   } catch (err) {
-    if (err instanceof couchbase.errors.DocumentExistsError) {
+    if (err instanceof couchbase.DocumentExistsError) {
       res.status(409).send({
         error: 'User already exists.',
       });
@@ -290,7 +290,7 @@ app.post('/api/user/:username/flights', authUser, async (req, res) => {
       context: 'updated document ' + userDocKey,
     });
   } catch (err) {
-    if (err instanceof couchbase.errors.DocumentNotFoundError) {
+    if (err instanceof couchbase.DocumentNotFoundError) {
       res.status(403).send({
         error: 'Could not find user.',
       });
