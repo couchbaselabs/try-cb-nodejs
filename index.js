@@ -138,13 +138,13 @@ app.get('/api/flightPaths/:from/:to', async (req, res) => {
     return;
   }
 
-  rows.forEach((row) => {
+  rows2.forEach((row) => {
     row.flighttime = Math.ceil(Math.random() * 8000);
     row.price = Math.ceil((row.flighttime / 8) * 100) / 100;
   });
 
   res.send({
-    data: rows,
+    data: rows2,
     context: [qs1, qs2],
   });
 });
