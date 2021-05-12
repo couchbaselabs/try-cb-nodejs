@@ -1,7 +1,6 @@
 'use strict';
 
 var bearerToken = require('express-bearer-token');
-var bodyParser = require('body-parser');
 var cors = require('cors');
 var couchbase = require('couchbase');
 var express = require('express');
@@ -27,10 +26,8 @@ var coll = bucket.defaultCollection();
 // Set up our express application
 var app = express();
 app.use(cors());
-app.use(bodyParser.json());
-
-// Serve the public directory to the root of the web server.
-app.use(express.static('public'));
+app.use(express.json());
+var tenants = express.Router({mergeParams: true})
 
 function authUser(req, res, next) {
   bearerToken()(req, res, () => {
@@ -62,9 +59,47 @@ app.use((err, req, res, next) => {
   next();
 });
 
+/*
+Python reference app gives:
+[
+  "/api/airports",
+  "/",
+  "/api/tenants/<tenant>/user/signup",
+  "/api/tenants/<tenant>/user/login",
+  "/api/tenants/<tenant>/user/<username>/flights",
+  "/api/flightPaths/<fromloc>/<toloc>",
+  "/api/hotels/<description>/<location>/",
+  "/static/<path:filename>"
+]
+
+We have:
+[
+"GET /",
+"GET /api/airports",
+"GET /api/flightPaths/:from/:to",
+"GET /api/hotels/:description/:location?",
+"POST /api/tenants/:tenant/user/login",
+"POST /api/tenants/:tenant/user/signup",
+"GET,PUT /api/tenants/:tenant/user/:username/flights"
+]
+*/
+
 app.get('/', (req, res) => {
-  res.send('Hello World!');
-});
+  const format = prefix => o => {
+    if (o.route) {
+      const methods = Object.keys(o.route.methods).map(s => s.toUpperCase())
+      return `${methods} ${ prefix }${ o.route.path }`
+    } else {
+      return []
+    }
+  }
+
+  const shared = app._router.stack.flatMap(format(''))
+  const tenanted = tenants.stack.flatMap(format('/api/tenants/:tenant'))
+  res.send(
+    JSON.stringify( shared.concat(tenanted) )
+  )
+})
 
 app.get('/api/airports', async (req, res) => {
   const searchTerm = req.query.search;
@@ -102,8 +137,8 @@ app.get('/api/flightPaths/:from/:to', async (req, res) => {
   const dayOfWeek = leaveDate.getDay();
 
   let qs1 = `
-      SELECT faa AS fromAirport FROM \`travel-sample\` WHERE airportname = '${fromAirport}' 
-      UNION 
+      SELECT faa AS fromAirport FROM \`travel-sample\` WHERE airportname = '${fromAirport}'
+      UNION
       SELECT faa AS toAirport FROM \`travel-sample\` WHERE airportname = '${toAirport}';
     `;
 
@@ -121,10 +156,10 @@ app.get('/api/flightPaths/:from/:to', async (req, res) => {
   const toFaa = rows[0].toAirport || rows[1].toAirport;
 
   let qs2 = `
-      SELECT a.name, s.flight, s.utc, r.sourceairport, r.destinationairport, r.equipment 
-      FROM \`travel-sample\` AS r UNNEST r.schedule AS s 
-      JOIN \`travel-sample\` AS a ON KEYS r.airlineid 
-      WHERE r.sourceairport = '${fromFaa}' AND r.destinationairport = '${toFaa}' AND s.day = ${dayOfWeek} 
+      SELECT a.name, s.flight, s.utc, r.sourceairport, r.destinationairport, r.equipment
+      FROM \`travel-sample\` AS r UNNEST r.schedule AS s
+      JOIN \`travel-sample\` AS a ON KEYS r.airlineid
+      WHERE r.sourceairport = '${fromFaa}' AND r.destinationairport = '${toFaa}' AND s.day = ${dayOfWeek}
       ORDER BY a.name ASC;
     `;
 
@@ -149,7 +184,12 @@ app.get('/api/flightPaths/:from/:to', async (req, res) => {
   });
 });
 
-app.post('/api/user/login', async (req, res) => {
+
+
+app.use('/api/tenants/:tenant/', tenants)
+
+
+tenants.route('/user/login').post(async (req, res) => {
   const user = req.body.user;
   const password = req.body.password;
 
@@ -164,12 +204,7 @@ app.post('/api/user/login', async (req, res) => {
       return;
     }
 
-    const token = jwt.sign(
-      {
-        user: user,
-      },
-      JWT_KEY
-    );
+    const token = jwt.sign({user}, JWT_KEY);
 
     res.send({
       data: {
@@ -188,7 +223,7 @@ app.post('/api/user/login', async (req, res) => {
   }
 });
 
-app.post('/api/user/signup', async (req, res) => {
+tenants.route('/user/signup').post(async (req, res) => {
   const user = req.body.user;
   const password = req.body.password;
 
@@ -202,12 +237,7 @@ app.post('/api/user/signup', async (req, res) => {
 
     await coll.insert(userDocKey, userDoc);
 
-    const token = jwt.sign(
-      {
-        user: user,
-      },
-      JWT_KEY
-    );
+    const token = jwt.sign({user}, JWT_KEY);
 
     res.send({
       data: {
@@ -227,7 +257,8 @@ app.post('/api/user/signup', async (req, res) => {
   }
 });
 
-app.get('/api/user/:username/flights', authUser, async (req, res) => {
+tenants.route('/user/:username/flights')
+.get(authUser, async (req, res) => {
   const username = req.params.username;
 
   if (username !== req.user.user) {
@@ -258,9 +289,8 @@ app.get('/api/user/:username/flights', authUser, async (req, res) => {
 
     throw err;
   }
-});
-
-app.post('/api/user/:username/flights', authUser, async (req, res) => {
+})
+.put(authUser, async (req, res) => {
   const username = req.params.username;
   const flights = req.body.flights;
 
@@ -301,7 +331,7 @@ app.post('/api/user/:username/flights', authUser, async (req, res) => {
   }
 });
 
-app.get('/api/hotel/:description/:location?', async (req, res) => {
+app.get('/api/hotels/:description/:location?', async (req, res) => {
   const description = req.params.description;
   const location = req.params.location;
   const qp = couchbase.SearchQuery.conjuncts([
