@@ -5,6 +5,7 @@ var cors = require('cors');
 var couchbase = require('couchbase');
 var express = require('express');
 var jwt = require('jsonwebtoken');
+const uuid = require( 'uuid')
 
 // Specify a key for JWT signing.
 var JWT_KEY = 'IAMSOSECRETIVE!';
@@ -20,8 +21,6 @@ var cluster = new couchbase.Cluster(
 
 // Open a specific Couchbase bucket, `travel-sample` in this case.
 var bucket = cluster.bucket('travel-sample');
-// And select the default collection
-var coll = bucket.defaultCollection();
 
 // Set up our express application
 var app = express();
@@ -32,7 +31,7 @@ var tenants = express.Router({mergeParams: true})
 function authUser(req, res, next) {
   bearerToken()(req, res, () => {
     // Temporary Hack to extract the token from the request
-    req.token = req.headers.authentication.split(' ')[1];
+    req.token = req.headers.authorization.split(' ')[1];
     jwt.verify(req.token, JWT_KEY, (err, decoded) => {
       if (err) {
         res.status(400).send({
@@ -104,29 +103,36 @@ app.get('/', (req, res) => {
 app.get('/api/airports', async (req, res) => {
   const searchTerm = req.query.search;
 
-  let qs;
+  let where;
   if (searchTerm.length === 3) {
     // FAA code
-    qs = `SELECT airportname from \`travel-sample\` WHERE faa = '${searchTerm.toUpperCase()}';`;
+    where = `faa = '${searchTerm.toUpperCase()}';`;
   } else if (
     searchTerm.length === 4 &&
     (searchTerm.toUpperCase() === searchTerm ||
       searchTerm.toLowerCase() === searchTerm)
   ) {
     // ICAO code
-    qs = `SELECT airportname from \`travel-sample\` WHERE icao = '${searchTerm.toUpperCase()}';`;
+    where = `icao = '${searchTerm.toUpperCase()}';`;
   } else {
     // Airport name
-    qs = `SELECT airportname from \`travel-sample\` WHERE LOWER(airportname) LIKE '%${searchTerm.toLowerCase()}%';`;
+    where = `LOWER(airportname) LIKE '%${searchTerm.toLowerCase()}%';`;
   }
 
-  const result = await cluster.query(qs);
-  const rows = result.rows;
+  let qs = `SELECT airportname from \`travel-sample\`.inventory.airport WHERE ${ where }`;
 
-  res.send({
-    data: rows,
-    context: [qs],
-  });
+  try {
+    const result = await cluster.query(qs);
+    const data = result.rows;
+    const context = [`N1QL query - scoped to inventory: ${qs}`]
+    res.send({data, context})
+  }
+  catch (err) {
+    res.status(500).send({
+      error: err
+    });
+    return;
+  }
 });
 
 app.get('/api/flightPaths/:from/:to', async (req, res) => {
@@ -136,11 +142,11 @@ app.get('/api/flightPaths/:from/:to', async (req, res) => {
 
   const dayOfWeek = leaveDate.getDay();
 
-  let qs1 = `
-      SELECT faa AS fromAirport FROM \`travel-sample\` WHERE airportname = '${fromAirport}'
-      UNION
-      SELECT faa AS toAirport FROM \`travel-sample\` WHERE airportname = '${toAirport}';
-    `;
+  let qs1 = `SELECT faa AS fromAirport FROM \`travel-sample\`.inventory.airport
+            WHERE airportname = '${fromAirport}'
+            UNION
+            SELECT faa AS toAirport FROM \`travel-sample\`.inventory.airport
+            WHERE airportname = '${toAirport}';`;
 
   const result = await cluster.query(qs1);
   const rows = result.rows;
@@ -151,15 +157,18 @@ app.get('/api/flightPaths/:from/:to', async (req, res) => {
     });
     return;
   }
-
-  const fromFaa = rows[0].fromAirport || rows[1].fromAirport;
-  const toFaa = rows[0].toAirport || rows[1].toAirport;
+  const airports = { ...rows[0], ...rows[1] }
+  const fromFaa = airports.fromAirport;
+  const toFaa   = airports.toAirport;
 
   let qs2 = `
       SELECT a.name, s.flight, s.utc, r.sourceairport, r.destinationairport, r.equipment
-      FROM \`travel-sample\` AS r UNNEST r.schedule AS s
-      JOIN \`travel-sample\` AS a ON KEYS r.airlineid
-      WHERE r.sourceairport = '${fromFaa}' AND r.destinationairport = '${toFaa}' AND s.day = ${dayOfWeek}
+      FROM \`travel-sample\`.inventory.route AS r
+      UNNEST r.schedule AS s
+      JOIN \`travel-sample\`.inventory.airline AS a ON KEYS r.airlineid
+      WHERE r.sourceairport = '${fromFaa}'
+      AND r.destinationairport = '${toFaa}'
+      AND s.day = ${dayOfWeek}
       ORDER BY a.name ASC;
     `;
 
@@ -180,7 +189,7 @@ app.get('/api/flightPaths/:from/:to', async (req, res) => {
 
   res.send({
     data: rows2,
-    context: [qs1, qs2],
+    context: ["N1QL query - scoped to inventory: ", qs2],
   });
 });
 
@@ -188,14 +197,19 @@ app.get('/api/flightPaths/:from/:to', async (req, res) => {
 
 app.use('/api/tenants/:tenant/', tenants)
 
+function makeKey(key) {
+  return key.toLowerCase()
+}
 
 tenants.route('/user/login').post(async (req, res) => {
-  const user = req.body.user;
+  const tenant = makeKey( req.params.tenant )
+  const user = makeKey( req.body.user );
   const password = req.body.password;
+  var scope = bucket.scope(tenant)
+  var users = scope.collection("users")
 
   try {
-    const userDocKey = 'user::' + user;
-    const result = await coll.get(userDocKey);
+    const result = await users.get(user);
 
     if (result.value.password !== password) {
       res.status(401).send({
@@ -207,9 +221,8 @@ tenants.route('/user/login').post(async (req, res) => {
     const token = jwt.sign({user}, JWT_KEY);
 
     res.send({
-      data: {
-        token: token,
-      },
+      data: {token},
+      context: [`KV get - scoped to ${tenant}.users: for password field in document ${user}`]
     });
   } catch (err) {
     if (err instanceof couchbase.DocumentNotFoundError) {
@@ -219,31 +232,33 @@ tenants.route('/user/login').post(async (req, res) => {
       return;
     }
 
-    throw err;
+    res.status(500).send({error: err})
   }
 });
 
 tenants.route('/user/signup').post(async (req, res) => {
-  const user = req.body.user;
-  const password = req.body.password;
+  const user = req.body.user
+  const userDocKey = makeKey(user)
+  const password = req.body.password
+
+  const tenant = makeKey( req.params.tenant )
+  var scope = bucket.scope(tenant)
+  var users = scope.collection("users")
 
   try {
-    const userDocKey = 'user::' + user;
     const userDoc = {
       name: user,
       password: password,
       flights: [],
     };
 
-    await coll.insert(userDocKey, userDoc);
+    await users.insert(userDocKey, userDoc);
 
     const token = jwt.sign({user}, JWT_KEY);
 
     res.send({
-      data: {
-        token: token,
-      },
-      context: ['created document ' + userDocKey],
+      data: {token},
+      context: [`KV insert - scoped to ${tenant}.users: document ${userDocKey}`]
     });
   } catch (err) {
     if (err instanceof couchbase.DocumentExistsError) {
@@ -253,13 +268,19 @@ tenants.route('/user/signup').post(async (req, res) => {
       return;
     }
 
-    throw err;
+    res.status(500).send({error: err})
   }
 });
 
 tenants.route('/user/:username/flights')
 .get(authUser, async (req, res) => {
-  const username = req.params.username;
+  const username = req.params.username
+  const userDocKey = makeKey(username)
+
+  const tenant = makeKey( req.params.tenant )
+  var scope = bucket.scope(tenant)
+  var users = scope.collection("users")
+  var bookings = scope.collection("bookings")
 
   if (username !== req.user.user) {
     res.status(401).send({
@@ -269,56 +290,18 @@ tenants.route('/user/:username/flights')
   }
 
   try {
-    const userDocKey = 'user::' + username;
-    const result = await coll.get(userDocKey);
+    const result = await users.get(userDocKey);
+    const ids = result.content.bookings || []
 
-    if (!result.content.flights) {
-      result.content.flights = [];
-    }
-
-    res.send({
-      data: result.content.flights,
-    });
-  } catch (err) {
-    if (err instanceof couchbase.errors.DocumentNotFoundError) {
-      res.status(403).send({
-        error: 'Could not find user.',
-      });
-      return;
-    }
-
-    throw err;
-  }
-})
-.put(authUser, async (req, res) => {
-  const username = req.params.username;
-  const flights = req.body.flights;
-
-  if (username !== req.user.user) {
-    res.status(401).send({
-      error: 'Username does not match token username.',
-    });
-    return;
-  }
-
-  try {
-    const userDocKey = 'user::' + username;
-    const result = await coll.get(userDocKey);
-
-    if (!result.content.flights) {
-      result.content.flights = [];
-    }
-
-    result.content.flights = result.content.flights.concat(flights);
-
-    await coll.replace(userDocKey, result.content, { cas: result.cas });
+    const inflated = await Promise.all(
+      ids.map(
+        async flightId => (await bookings.get(flightId)).content))
 
     res.send({
-      data: {
-        added: flights,
-      },
-      context: 'updated document ' + userDocKey,
-    });
+      data: inflated,
+      context: `KV get - scoped to ${tenant}.user: for ${ids.length} bookings in document ${userDocKey}`,
+    })
+
   } catch (err) {
     if (err instanceof couchbase.DocumentNotFoundError) {
       res.status(403).send({
@@ -327,13 +310,71 @@ tenants.route('/user/:username/flights')
       return;
     }
 
-    throw err;
+    res.status(500).send({error: err})
+  }
+})
+.put(authUser, async (req, res) => {
+  const username = req.params.username
+  const userDocKey = makeKey(username)
+
+  const newFlight = req.body.flights[0]
+  const tenant = makeKey( req.params.tenant )
+
+  var scope = bucket.scope(tenant)
+  var users = scope.collection("users")
+  var bookings = scope.collection("bookings")
+
+  if (username !== req.user.user) {
+    res.status(401).send({
+      error: 'Username does not match token username.',
+    });
+    return;
+  }
+
+  const flightId = uuid.v4()
+
+  try {
+    await bookings.upsert(flightId, newFlight)
+  }
+  catch (err) {
+    res.status(500).send({
+      error: 'Failed to add flight data',
+    });
+    return;
+  }
+
+  try {
+    await users.mutateIn(userDocKey, [
+      couchbase.MutateInSpec.arrayAppend(
+        'bookings',
+        flightId,
+        { createPath: true })])
+
+    res.send({
+      data: {
+        added: newFlight,
+      },
+      context:
+        [`KV mutateIn - scoped to ${tenant}.users: for bookings subdocument field in document ${userDocKey}`]
+    })
+    return
+  } catch (err) {
+    if (err instanceof couchbase.DocumentNotFoundError) {
+      res.status(403).send({
+        error: 'Could not find user.',
+      });
+      return;
+    }
+
+    res.status(500).send({error: err})
   }
 });
 
 app.get('/api/hotels/:description/:location?', async (req, res) => {
   const description = req.params.description;
   const location = req.params.location;
+  var scope = bucket.scope("inventory")
+  var hotels = scope.collection("hotel")
   const qp = couchbase.SearchQuery.conjuncts([
     couchbase.SearchQuery.term('hotel').field('type'),
   ]);
@@ -357,36 +398,48 @@ app.get('/api/hotels/:description/:location?', async (req, res) => {
     );
   }
 
-  const result = await cluster.searchQuery('hotels', qp, { limit: 100 });
+  const result = await cluster.searchQuery('hotels-index', qp, { limit: 100 });
   const rows = result.rows;
   if (rows.length === 0) {
     res.send({
       data: [],
-      context: [],
+      context: [`FTS search - scoped to: inventory.hotel (no results)\n${JSON.stringify(qp)}`],
     });
     return;
   }
 
+  const addressCols = [
+    'address',
+    'state',
+    'city',
+    'country'
+  ]
+
+  const cols = [
+    'type',
+    'name',
+    'description',
+    ...addressCols
+  ]
+
   const results = await Promise.all(
     rows.map(async (row) => {
-      const doc = await coll.get(row.id, {
-        project: [
-          'type',
-          'country',
-          'city',
-          'state',
-          'address',
-          'name',
-          'description',
-        ],
+      const doc = await hotels.get(row.id, {
+        project: cols
       });
-      return doc.content;
+      var content = doc.content
+      content.address =
+        addressCols
+        .flatMap(field => content[field] || [])
+        .join(', ')
+      return content;
     })
   );
 
   res.send({
     data: results,
-    context: [],
+    context: [
+      `FTS search - scoped to: inventory.hotel within fields ${cols.join(', ')}\n${JSON.stringify(qp)}`]
   });
 });
 
