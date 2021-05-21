@@ -5,7 +5,8 @@ var cors = require('cors');
 var couchbase = require('couchbase');
 var express = require('express');
 var jwt = require('jsonwebtoken');
-const uuid = require( 'uuid')
+var morgan = require('morgan')
+var uuid = require( 'uuid')
 
 // Specify a key for JWT signing.
 var JWT_KEY = 'IAMSOSECRETIVE!';
@@ -24,6 +25,7 @@ var bucket = cluster.bucket('travel-sample');
 
 // Set up our express application
 var app = express();
+app.use(morgan('dev'))
 app.use(cors());
 app.use(express.json());
 var tenants = express.Router({mergeParams: true})
@@ -237,6 +239,7 @@ tenants.route('/user/login').post(async (req, res) => {
 });
 
 tenants.route('/user/signup').post(async (req, res) => {
+  console.log("RARR!")
   const user = req.body.user
   const userDocKey = makeKey(user)
   const password = req.body.password
@@ -268,6 +271,7 @@ tenants.route('/user/signup').post(async (req, res) => {
       return;
     }
 
+    console.log(err)
     res.status(500).send({error: err})
   }
 });
