@@ -32,7 +32,7 @@ app.use(morgan('dev'))
 app.use(cors())
 app.use(express.json())
 
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+app.use('/apidocs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 var tenants = express.Router({mergeParams: true})
 

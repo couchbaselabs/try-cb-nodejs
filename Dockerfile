@@ -4,11 +4,6 @@ LABEL maintainer="Couchbase"
 
 WORKDIR /app
 
-#RUN apt-get update && apt-get install -y \
-#    build-essential cmake \
-#    git-all libssl-dev \
-#    jq curl
-
 RUN apt-get update && apt-get install -y \
     build-essential python\
     jq curl
