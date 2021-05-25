@@ -8,6 +8,8 @@ var express = require('express')
 var jwt = require('jsonwebtoken')
 var morgan = require('morgan')
 var uuid = require( 'uuid')
+var swaggerUi = require('swagger-ui-express')
+const swaggerDocument = require('./swagger.json')
 
 // Specify a key for JWT signing.
 var JWT_KEY = 'IAMSOSECRETIVE!'
@@ -29,6 +31,9 @@ var app = express()
 app.use(morgan('dev'))
 app.use(cors())
 app.use(express.json())
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
 var tenants = express.Router({mergeParams: true})
 
 function authUser(req, res, next) {
@@ -49,45 +54,14 @@ function authUser(req, res, next) {
   })
 }
 
-/*
-Python reference app gives:
-[
-  "/api/airports",
-  "/",
-  "/api/tenants/<tenant>/user/signup",
-  "/api/tenants/<tenant>/user/login",
-  "/api/tenants/<tenant>/user/<username>/flights",
-  "/api/flightPaths/<fromloc>/<toloc>",
-  "/api/hotels/<description>/<location>/",
-  "/static/<path:filename>"
-]
-
-We have:
-[
-"GET /",
-"GET /api/airports",
-"GET /api/flightPaths/:from/:to",
-"GET /api/hotels/:description/:location?",
-"POST /api/tenants/:tenant/user/login",
-"POST /api/tenants/:tenant/user/signup",
-"GET,PUT /api/tenants/:tenant/user/:username/flights"
-]
-*/
-
 app.get('/', (req, res) => {
-  const format = prefix => o => {
-    if (o.route) {
-      const methods = Object.keys(o.route.methods).map(s => s.toUpperCase())
-      return `${methods} ${ prefix }${ o.route.path }`
-    } else {
-      return []
-    }
-  }
-
-  const shared = app._router.stack.flatMap(format(''))
-  const tenanted = tenants.stack.flatMap(format('/api/tenants/:tenant'))
   return res.send(
-    JSON.stringify( shared.concat(tenanted) )
+    `<h1>NodeJS Travel Sample API</h1>
+    A sample API for getting started with Couchbase Server and the NodeJS SDK.
+    <ul>
+      <li><a href="/api-docs">Learn the API with Swagger, interactively</a>
+      <li><a href="https://github.com/couchbaselabs/try-cb-nodejs">GitHub</a>
+    </ul>`
   )
 })
 
