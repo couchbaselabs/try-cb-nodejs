@@ -1,16 +1,16 @@
-'use strict';
+'use strict'
 
-var bearerToken = require('express-bearer-token');
-var cors = require('cors');
-var couchbase = require('couchbase');
+var bearerToken = require('express-bearer-token')
+var cors = require('cors')
+var couchbase = require('couchbase')
 
-var express = require('express');
-var jwt = require('jsonwebtoken');
+var express = require('express')
+var jwt = require('jsonwebtoken')
 var morgan = require('morgan')
 var uuid = require( 'uuid')
 
 // Specify a key for JWT signing.
-var JWT_KEY = 'IAMSOSECRETIVE!';
+var JWT_KEY = 'IAMSOSECRETIVE!'
 
 // Create a Couchbase Cluster connection
 var cluster = new couchbase.Cluster(
@@ -19,38 +19,35 @@ var cluster = new couchbase.Cluster(
     username: 'Administrator',
     password: 'password'
   }
-);
+)
 
 // Open a specific Couchbase bucket, `travel-sample` in this case.
-var bucket = cluster.bucket('travel-sample');
+var bucket = cluster.bucket('travel-sample')
 
 // Set up our express application
-var app = express();
+var app = express()
 app.use(morgan('dev'))
-app.use(cors());
-app.use(express.json());
+app.use(cors())
+app.use(express.json())
 var tenants = express.Router({mergeParams: true})
 
 function authUser(req, res, next) {
   bearerToken()(req, res, () => {
     // Temporary Hack to extract the token from the request
-    req.token = req.headers.authorization.split(' ')[1];
+    req.token = req.headers.authorization.split(' ')[1]
     jwt.verify(req.token, JWT_KEY, (err, decoded) => {
       if (err) {
         return res.status(400).send({
           error: 'Invalid JWT token',
           cause: err,
-        });
+        })
       }
 
-      req.user = decoded;
-      next();
-    });
-  });
+      req.user = decoded
+      next()
+    })
+  })
 }
-
-
-
 
 /*
 Python reference app gives:
@@ -103,27 +100,27 @@ function runAsync (callback) {
 
 app.get('/api/airports',
   runAsync(async (req, res) => {
-    const searchTerm = req.query.search;
-    let where;
+    const searchTerm = req.query.search
+    let where
     if (searchTerm.length === 3) {
       // FAA code
-      where = `faa = '${searchTerm.toUpperCase()}';`;
+      where = `faa = '${searchTerm.toUpperCase()}'`
     } else if (
       searchTerm.length === 4 &&
       (searchTerm.toUpperCase() === searchTerm ||
         searchTerm.toLowerCase() === searchTerm)
     ) {
       // ICAO code
-      where = `icao = '${searchTerm.toUpperCase()}';`;
+      where = `icao = '${searchTerm.toUpperCase()}'`
     } else {
       // Airport name
-      where = `LOWER(airportname) LIKE '%${searchTerm.toLowerCase()}%';`;
+      where = `LOWER(airportname) LIKE '%${searchTerm.toLowerCase()}%'`
     }
 
-    let qs = `SELECT airportname from \`travel-sample\`.inventory.airport WHERE ${ where }`;
+    let qs = `SELECT airportname from \`travel-sample\`.inventory.airport WHERE ${ where };`
 
-    const result = await cluster.query(qs);
-    const data = result.rows;
+    const result = await cluster.query(qs)
+    const data = result.rows
     const context = [`N1QL query - scoped to inventory: ${qs}`]
     return res.send({data, context})
   })
@@ -131,11 +128,11 @@ app.get('/api/airports',
 
 app.get('/api/flightPaths/:from/:to',
   runAsync(async (req, res) => {
-    const fromAirport = req.params.from;
-    const toAirport = req.params.to;
-    const leaveDate = new Date(req.query.leave);
+    const fromAirport = req.params.from
+    const toAirport = req.params.to
+    const leaveDate = new Date(req.query.leave)
 
-    const dayOfWeek = leaveDate.getDay();
+    const dayOfWeek = leaveDate.getDay()
 
     let qs1 = `SELECT faa AS fromFaa
               FROM \`travel-sample\`.inventory.airport
@@ -143,15 +140,15 @@ app.get('/api/flightPaths/:from/:to',
               UNION
               SELECT faa AS toFaa
               FROM \`travel-sample\`.inventory.airport
-              WHERE airportname = '${toAirport}';`;
+              WHERE airportname = '${toAirport}';`
 
-    const result = await cluster.query(qs1);
-    const rows = result.rows;
+    const result = await cluster.query(qs1)
+    const rows = result.rows
     if (rows.length !== 2) {
       return res.status(404).send({
         error: 'One of the specified airports is invalid.',
         context: [qs1],
-      });
+      })
     }
     const { fromFaa, toFaa } = { ...rows[0], ...rows[1] }
 
@@ -164,10 +161,10 @@ app.get('/api/flightPaths/:from/:to',
         AND r.destinationairport = '${toFaa}'
         AND s.day = ${dayOfWeek}
         ORDER BY a.name ASC;
-      `;
+      `
 
-    const result2 = await cluster.query(qs2);
-    const rows2 = result2.rows;
+    const result2 = await cluster.query(qs2)
+    const rows2 = result2.rows
     if (rows2.length === 0) {
       return res.status(404).send({
         error: 'No flights exist between these airports.',
@@ -176,8 +173,8 @@ app.get('/api/flightPaths/:from/:to',
     }
 
     rows2.forEach((row) => {
-      row.flighttime = Math.ceil(Math.random() * 8000);
-      row.price = Math.ceil((row.flighttime / 8) * 100) / 100;
+      row.flighttime = Math.ceil(Math.random() * 8000)
+      row.price = Math.ceil((row.flighttime / 8) * 100) / 100
     })
 
     return res.send({
@@ -194,31 +191,31 @@ const makeKey = key => key.toLowerCase()
 tenants.route('/user/login').post(
   runAsync(async (req, res) => {
     const tenant = makeKey( req.params.tenant )
-    const user = makeKey( req.body.user );
-    const password = req.body.password;
+    const user = makeKey( req.body.user )
+    const password = req.body.password
     var scope = bucket.scope(tenant)
     var users = scope.collection("users")
 
     try {
-      const result = await users.get(user);
+      const result = await users.get(user)
 
       if (result.value.password !== password) {
         return res.status(401).send({
           error: 'Password does not match.',
-        });
+        })
       }
 
-      const token = jwt.sign({user}, JWT_KEY);
+      const token = jwt.sign({user}, JWT_KEY)
 
       return res.send({
         data: {token},
         context: [`KV get - scoped to ${tenant}.users: for password field in document ${user}`]
-      });
+      })
     } catch (err) {
       if (err instanceof couchbase.DocumentNotFoundError) {
         return res.status(401).send({
           error: 'User does not exist.',
-        });
+        })
       }
       else {
         throw(err)
@@ -242,21 +239,21 @@ tenants.route('/user/signup').post(
         name: user,
         password: password,
         flights: [],
-      };
+      }
 
-      await users.insert(userDocKey, userDoc);
+      await users.insert(userDocKey, userDoc)
 
-      const token = jwt.sign({user}, JWT_KEY);
+      const token = jwt.sign({user}, JWT_KEY)
 
       return res.send({
         data: {token},
         context: [`KV insert - scoped to ${tenant}.users: document ${userDocKey}`]
-      });
+      })
     } catch (err) {
       if (err instanceof couchbase.DocumentExistsError) {
         return res.status(409).send({
           error: 'User already exists.',
-        });
+        })
       }
       else {
         throw(err)
@@ -279,11 +276,11 @@ tenants.route('/user/:username/flights')
     if (username !== req.user.user) {
       return res.status(401).send({
         error: 'Username does not match token username.',
-      });
+      })
     }
 
     try {
-      const result = await users.get(userDocKey);
+      const result = await users.get(userDocKey)
       const ids = result.content.bookings || []
 
       const inflated = await Promise.all(
@@ -321,7 +318,7 @@ tenants.route('/user/:username/flights')
     if (username !== req.user.user) {
       return res.status(401).send({
         error: 'Username does not match token username.',
-      });
+      })
     }
 
     const flightId = uuid.v4()
@@ -332,7 +329,7 @@ tenants.route('/user/:username/flights')
     catch (err) {
       return res.status(500).send({
         error: 'Failed to add flight data',
-      });
+      })
     }
 
     try {
@@ -353,7 +350,7 @@ tenants.route('/user/:username/flights')
       if (err instanceof couchbase.DocumentNotFoundError) {
         return res.status(403).send({
           error: 'Could not find user.',
-        });
+        })
       }
       else {
         throw(err)
@@ -364,13 +361,13 @@ tenants.route('/user/:username/flights')
 
 app.get('/api/hotels/:description/:location?',
   runAsync(async (req, res) => {
-    const description = req.params.description;
-    const location = req.params.location;
+    const description = req.params.description
+    const location = req.params.location
     var scope = bucket.scope("inventory")
     var hotels = scope.collection("hotel")
     const qp = couchbase.SearchQuery.conjuncts([
       couchbase.SearchQuery.term('hotel').field('type'),
-    ]);
+    ])
 
     if (location && location !== '*') {
       qp.and(
@@ -380,7 +377,7 @@ app.get('/api/hotels/:description/:location?',
           couchbase.SearchQuery.match(location).field('state'),
           couchbase.SearchQuery.match(location).field('address')
         )
-      );
+      )
     }
     if (description && description !== '*') {
       qp.and(
@@ -388,16 +385,16 @@ app.get('/api/hotels/:description/:location?',
           couchbase.SearchQuery.match(description).field('description'),
           couchbase.SearchQuery.match(description).field('name')
         )
-      );
+      )
     }
 
-    const result = await cluster.searchQuery('hotels-index', qp, { limit: 100 });
-    const rows = result.rows;
+    const result = await cluster.searchQuery('hotels-index', qp, { limit: 100 })
+    const rows = result.rows
     if (rows.length === 0) {
       return res.send({
         data: [],
         context: [`FTS search - scoped to: inventory.hotel (no results)\n${JSON.stringify(qp)}`],
-      });
+      })
     }
 
     const addressCols = [
@@ -418,13 +415,13 @@ app.get('/api/hotels/:description/:location?',
       rows.map(async (row) => {
         const doc = await hotels.get(row.id, {
           project: cols
-        });
+        })
         var content = doc.content
         content.address =
           addressCols
           .flatMap(field => content[field] || [])
           .join(', ')
-        return content;
+        return content
       })
     )
 
@@ -447,11 +444,11 @@ app.use((err, req, res, next) => {
   else {
     return res.status(500).send({
       error: `${err.toString()}: ${JSON.stringify(err)}`
-    });
+    })
   }
   next()
-});
+})
 
 app.listen(8080, () => {
-  console.log('Example app listening on port 8080!');
-});
+  console.log('Example app listening on port 8080!')
+})
