@@ -15,11 +15,20 @@ const swaggerDocument = require('./swagger.json')
 var JWT_KEY = 'IAMSOSECRETIVE!'
 
 // Create a Couchbase Cluster connection
+const CB = {
+  host: process.env.CB_HOST || 'couchbase://localhost',
+  username: process.env.CB_USER || 'Administrator',
+  password: process.env.CB_PASS || 'password'
+}
+
+console.log(process.env)
+console.log(CB)
+
 var cluster = new couchbase.Cluster(
-  'couchbase://localhost',
+  CB.host,
   {
-    username: 'Administrator',
-    password: 'password'
+    username: CB.username,
+    password: CB.password
   }
 )
 
@@ -56,10 +65,10 @@ function authUser(req, res, next) {
 
 app.get('/', (req, res) => {
   return res.send(
-    `<h1>NodeJS Travel Sample API</h1>
-    A sample API for getting started with Couchbase Server and the NodeJS SDK.
+    `<h1>Node.js Travel Sample API</h1>
+    A sample API for getting started with Couchbase Server and the Node.js SDK.
     <ul>
-      <li><a href="/api-docs">Learn the API with Swagger, interactively</a>
+      <li><a href="/apidocs">Learn the API with Swagger, interactively</a>
       <li><a href="https://github.com/couchbaselabs/try-cb-nodejs">GitHub</a>
     </ul>`
   )
@@ -424,5 +433,6 @@ app.use((err, req, res, next) => {
 })
 
 app.listen(8080, () => {
+  console.log(`Connecting to backend Couchbase server ${CB.host} with ${CB.username}/${CB.password}`)
   console.log('Example app listening on port 8080!')
 })

@@ -12,7 +12,6 @@ services:
       - CB_HOST
       - CB_USER
       - CB_PSWD
-    command: $CB_HOST $CB_USER $CB_PSWD
     container_name: try-cb-api
   
   frontend:

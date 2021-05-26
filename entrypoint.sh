@@ -44,4 +44,4 @@ fi
 echo
 echo "Running backend..."
 # export DEBUG=express:*
-node index.js # -c $CB_HOST -u $CB_USER -p $CB_PSWD
+node index.js
