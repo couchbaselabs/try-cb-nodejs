@@ -16,16 +16,13 @@ var JWT_KEY = 'IAMSOSECRETIVE!'
 
 // Create a Couchbase Cluster connection
 const CB = {
-  host: process.env.CB_HOST || 'couchbase://localhost',
+  host: process.env.CB_HOST || 'localhost',
   username: process.env.CB_USER || 'Administrator',
   password: process.env.CB_PASS || 'password'
 }
 
-console.log(process.env)
-console.log(CB)
-
 var cluster = new couchbase.Cluster(
-  CB.host,
+  `couchbase://${CB.host}`,
   {
     username: CB.username,
     password: CB.password
