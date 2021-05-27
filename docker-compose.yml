@@ -28,12 +28,7 @@ services:
     ports:
       - "8091-8095:8091-8095"
       - "11210:11210"
-    expose: # expose ports 8091 & 8094 to other containers (mainly for backend)
+    expose:
       - "8091"
       - "8094"
-    healthcheck: # checks couchbase server is up
-      test: ["CMD", "curl", "-v", "http://localhost:8091/pools"]
-      interval: 20s
-      timeout: 20s
-      retries: 2
     container_name: couchbase-sandbox-7.0.0-beta
