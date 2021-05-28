@@ -11,7 +11,8 @@ services:
       - CB_HOST
       - CB_USER
       - CB_PSWD
-    entrypoint: ["./wait-for-couchbase.sh", "./entrypoint.sh"]
+      - COLUMNS
+    entrypoint: ["./wait-for-couchbase.sh", "node", "index.js"]
     container_name: try-cb-api
 
   frontend:
@@ -19,7 +20,7 @@ services:
     ports:
       - 8081:8081
     container_name: try-cb-fe
-    entrypoint: ["wait-for-it", "backend:8080", "--timeout=200", "--strict", "--", "npm", "run", "serve"]
+    entrypoint: ["wait-for-it", "backend:8080", "--timeout=400", "--strict", "--", "npm", "run", "serve"]
     depends_on:
       - backend
 
@@ -27,6 +28,7 @@ services:
     image: couchbase/server-sandbox:7.0.0-beta
     ports:
       - "8091-8095:8091-8095"
+      - "9102:9102"
       - "11210:11210"
     expose:
       - "8091"
