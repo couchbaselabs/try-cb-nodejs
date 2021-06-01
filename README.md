@@ -109,38 +109,73 @@ We've integrated Swagger/OpenApi version 3 documentation which can be accessed o
 
 More detail on the design of the API can be found  at [https://github.com/couchbaselabs/try-cb-frontend/blob/master/documentation/try-cb-api-spec-v2.adoc]
 
-### Mix and match services
+## Mix and match services
 
 Instead of running all services, you can start any combination of `backend`, `frontend`, `db` via docker, and take responsibility for starting the other services yourself.
 
-For example, if you wish to run the application against a different instance of Couchbase Server that you are already running, you can simply start the backend and frontend, and pass the database details in:
+As the provided `docker-compose.yml` sets up dependencies between the services, to make startup as smooth and automatic as possible, we also provide an alternative `mix-and-match.yml`. We'll look at a few useful scenarios here.
+
+### Bring your own database
+
+If you are already running a Couchbase Server, you can pass the database details in:
 
 ```
-CB_HOST=10.144.211.101 CB_USER=Administrator CB_PSWD=password docker-compose up backend frontend
+CB_HOST=10.144.211.101 CB_USER=Administrator CB_PSWD=password docker-compose -f mix-and-match.yml up backend frontend
 ```
 
-## Running the application (without Docker)
+The server must already have the `travel-sample` bucket installed.
+The Docker image will run the same checks as usual, and also create a `hotels-index`.
 
-To load all the necessary Node.js libraries for the backend application, you can run:
+
+### Running the Node.js API application manually
+
+To load all the necessary Node.js libraries for the backend application, run:
 
 ```
 npm install
 ```
 
-You can then run the app using your preferred Node toolchain, for example:
+You can then run the app using your preferred Node toolchain. As you are running the server
+on your localhost, and not in a Docker container, you will have to point at it with the
+`CB_HOST` environment variable.
+
+The first time you run against a new database image, you may want to use the provided
+`wait-for-couchbase.sh` wrapper to ensure that all indexes are created.
+For example, using the Docker image provided:
 
 ```
-node index.js
+docker-compose -f mix-and-match.yml up db
+CB_HOST=localhost ./wait-for-couchbase.sh node index.js
 
-# using nodemon to auto-restart the app on change
-npm install -g nodemon
-nodemon index.js
+# or, if you know the database is already configured and responding
+CB_HOST=localhost node index.js
+```
 
-# point the app at a different Couchbase server
+If you already have an existing Couchbase server running and correctly configured, you might run:
+
+```
 CB_HOST=10.144.211.101 CB_USER=Administrator CB_PSWD=password node index.js
 ```
 
-To run the front-end Vue application follow the instructions [here](https://github.com/couchbaselabs/try-cb-frontend-v2).
+It's often convenient to use `nodemon` to auto-restart the app whenever you make a change.
+
+```
+npm install -g nodemon
+CB_HOST=localhost nodemon index.js
+```
+
+To run the front-end Vue application:
+
+```
+docker-compose -f mix-and-match.yml up frontend
+```
+
+### Running the database or front-end manually
+
+To run the database and/or frontend components manually without Docker, follow the appropriate guides:
+
+* [Couchbase server - getting started](https://docs.couchbase.com/server/current/getting-started/start-here.html)
+* [Travel sample frontend](https://github.com/couchbaselabs/try-cb-frontend-v2)
 
 ## Configuration Options
 

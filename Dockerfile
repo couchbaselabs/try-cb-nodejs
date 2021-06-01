@@ -10,11 +10,8 @@ RUN apt-get update && apt-get install -y \
 
 COPY . /app 
 
-# Get pip to download and install requirements:
 RUN npm install
 
-# Expose ports
 EXPOSE 8080
 
-# Set the entrypoint 
-ENTRYPOINT ["./entrypoint.sh"]
+ENTRYPOINT ["./wait-for-couchbase.sh", "node", "index.js"]
