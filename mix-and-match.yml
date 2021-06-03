@@ -9,7 +9,6 @@ services:
       - CB_HOST
       - CB_USER
       - CB_PSWD
-      - COLUMNS
     container_name: try-cb-api-mm
 
   frontend:
