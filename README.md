@@ -15,9 +15,7 @@ for applicable air flight routes from a previously populated database. An additi
 
 To download the application you can either download [the archive](https://github.com/couchbaselabs/try-cb-nodejs/archive/master.zip) or clone the repository:
 
-    ```
     git clone https://github.com/couchbaselabs/try-cb-nodejs.git
-    ```
 
 We recommend running the application with Docker, which starts up all components for you,
 but you can also run it in a Mix-and-Match style, which we'll decribe below.
@@ -29,9 +27,7 @@ You will need [Docker](https://docs.docker.com/get-docker/) installed on your ma
 
 To launch the full application, simply run this command from a terminal:
 
-    ```
     docker-compose up
-    ```
 
 > **_NOTE:_** When you run the application for the first time, it will pull/build the relevant docker images, so it might take a bit of time.
 
@@ -40,7 +36,6 @@ This will start the Node.js backend, Couchbase Server 7.0.0-beta and the Vue fro
 You can access the backend API on http://localhost:8080/, the UI on
 http://localhost:8081/ and Couchbase Server at http://localhost:8091/
 
-    ```
     ❯ docker-compose up
     Docker Compose is now in the Docker CLI, try `docker compose up`
 
@@ -88,13 +83,13 @@ http://localhost:8081/ and Couchbase Server at http://localhost:8091/
     try-cb-fe   | > vue-cli-service serve --port 8081
     try-cb-fe   |
     try-cb-fe   |  INFO  Starting development server...
-    ```
 
 You should then be able to browse the UI, search for US airports and get flight
 route information.
 
 To end the application press <kbd>Control</kbd>+<kbd>C</kbd> in the terminal
 and wait for docker-compose to gracefully stop your containers.
+
 
 ## Mix and match services
 
@@ -105,6 +100,7 @@ services yourself.
 As the provided `docker-compose.yml` sets up dependencies between the services,
 to make startup as smooth and automatic as possible, we also provide an
 alternative `mix-and-match.yml`. We'll look at a few useful scenarios here.
+
 
 ### Bring your own database
 
@@ -117,19 +113,15 @@ bucket setup.
 > search index on travel-sample bucket called 'hotels-index'. You can do this
 > via the following command:
 
-    ```
     curl --fail -s -u <username>:<password> -X PUT \
             http://<host>:8094/api/index/hotels-index \
             -H 'cache-control: no-cache' \
             -H 'content-type: application/json' \
             -d @fts-hotels-index.json
-    ```
 
 With a running Couchbase Server, you can pass the database details in:
 
-    ```
     CB_HOST=10.144.211.101 CB_USER=Administrator CB_PSWD=password docker-compose -f mix-and-match.yml up backend frontend
-    ```
 
 The Docker image will run the same checks as usual, and also create the
 `hotels-index` if it does not already exist.
@@ -143,9 +135,7 @@ image. You may still use Docker to run the Database and Frontend components if d
 
 Install the dependencies:
 
-    ```
     npm install
-    ```
 
 Note that `nodemon` is installed as a dev-dependency, so you can run the server with
 the benefit of automatic restarting as you make changes.
@@ -158,26 +148,20 @@ The first time you run against a new database image, you may want to use the pro
 For example, using the Docker image provided:
 
 
-    ```
     docker-compose -f mix-and-match.yml up db
 
     export CB_HOST=localhost
     ./wait-for-couchbase.sh echo "Couchbase is ready!"
     npx nodemon index.js
-    ```
 
 If you already have an existing Couchbase server running and correctly configured, you might run:
 
-    ```
     CB_HOST=10.144.211.101 CB_USER=Administrator CB_PSWD=password npx nodemon index.js
-    ```
 
 Finally, if you want to see how the sample frontend Vue application works with your changes,
 run it with:
 
-    ```
     docker-compose -f mix-and-match.yml up frontend
-    ```
 
 
 ### Running the front-end manually
@@ -189,8 +173,6 @@ To run the frontend components manually without Docker, follow the guide
 ## REST API reference
 
 We've integrated Swagger/OpenApi version 3 documentation which can be accessed on the backend at `http://localhost:8080/apidocs`
-
-More detail on the design of the API can be found  at [https://github.com/couchbaselabs/try-cb-frontend/blob/master/documentation/try-cb-api-spec-v2.adoc]
 
 
 [Couchbase Server]: https://www.couchbase.com/
