@@ -58,7 +58,7 @@
     "title": "Travel Sample API",
     "version": "1.0"
   },
-  "openapi": "3.0.5",
+  "openapi": "3.0.3",
   "paths": {
     "/": {
       "get": {
@@ -187,7 +187,7 @@
         ]
       }
     },
-    "/api/hotels/{description}/{location}": {
+    "/api/hotels/{description}/{location}/": {
       "get": {
         "parameters": [
           {
@@ -357,7 +357,7 @@
           }
         },
         "responses": {
-          "200": {
+          "201": {
             "content": {
               "application/json": {
                 "example": {
@@ -534,14 +534,16 @@
                     "KV update - scoped to tenant_agent_00.user: for bookings field in document user1"
                   ],
                   "data": {
-                    "added": {
-                      "date": "12/12/2020",
-                      "destinationairport": "Leonardo Da Vinci International Airport",
-                      "flight": "12RF",
-                      "name": "boeing",
-                      "price": 50.0,
-                      "sourceairport": "London (Gatwick)"
-                    }
+                    "added": [
+                      {
+                        "date": "12/12/2020",
+                        "destinationairport": "Leonardo Da Vinci International Airport",
+                        "flight": "12RF",
+                        "name": "boeing",
+                        "price": 50.0,
+                        "sourceairport": "London (Gatwick)"
+                      }
+                    ]
                   }
                 },
                 "schema": {
