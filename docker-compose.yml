@@ -1,0 +1,30 @@
+version: "3.9"
+
+services:
+  backend:
+    build: .
+    depends_on:
+      - db
+    ports:
+      - 8080:8080
+    container_name: try-cb-api
+
+  frontend:
+    build: "https://github.com/couchbaselabs/try-cb-frontend-v2.git#7.0"
+    ports:
+      - 8081:8081
+    container_name: try-cb-fe
+    entrypoint: ["wait-for-it", "backend:8080", "--timeout=400", "--strict", "--", "npm", "run", "serve"]
+    depends_on:
+      - backend
+
+  db:
+    image: couchbase/server-sandbox:7.0.0-beta
+    ports:
+      - "8091-8095:8091-8095"
+      - "9102:9102"
+      - "11210:11210"
+    expose:
+      - "8091"
+      - "8094"
+    container_name: couchbase-sandbox-7.0.0-beta
