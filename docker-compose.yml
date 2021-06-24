@@ -9,6 +9,11 @@ services:
       - 8080:8080
     container_name: try-cb-api
 
+  swagger-ui:
+    build: "https://github.com/couchbaselabs/try-cb-swagger.git#main"
+    ports:
+      - 8082:8082
+
   frontend:
     build: "https://github.com/couchbaselabs/try-cb-frontend-v2.git#7.0"
     ports:
