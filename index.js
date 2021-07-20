@@ -37,6 +37,7 @@ var app = express()
 app.use(morgan('dev'))
 app.use(cors())
 app.use(express.json())
+app.use(express.static('public'))
 
 app.use('/apidocs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
