@@ -23,15 +23,17 @@ but you can also run it in a Mix-and-Match style, which we'll decribe below.
 
 ## Running the application with Docker
 
-You will need [Docker](https://docs.docker.com/get-docker/) installed on your machine in order to run this application as we have defined a [_Dockerfile_](Dockerfile) and a [_docker-compose.yml_](docker-compose.yml) to run Couchbase Server 7.0.0 beta, the front-end [Vue app](https://github.com/couchbaselabs/try-cb-frontend-v2.git) and the Node.js REST API.
+You will need [Docker](https://docs.docker.com/get-docker/) installed on your machine in order to run this application as we have defined a [_Dockerfile_](Dockerfile) and a [_docker-compose.yml_](docker-compose.yml) to run Couchbase Server 7.0.0, the front-end [Vue app](https://github.com/couchbaselabs/try-cb-frontend-v2.git) and the Node.js REST API.
 
 To launch the full application, simply run this command from a terminal:
 
     docker-compose up
 
-> **_NOTE:_** When you run the application for the first time, it will pull/build the relevant docker images, so it might take a bit of time.
+> **_NOTE:_** You may need more than the default RAM to run the images.
+We have tested the travel-sample apps with 4.5 GB RAM configured in Docker's Preferences... -> Resources -> Memory.
+When you run the application for the first time, it will pull/build the relevant docker images, so it may take a bit of time.
 
-This will start the Node.js backend, Couchbase Server 7.0.0-beta and the Vue frontend app.
+This will start the Node.js backend, Couchbase Server 7.0.0 and the Vue frontend app.
 
 You can access the backend API on http://localhost:8080/, the UI on
 http://localhost:8081/ and Couchbase Server at http://localhost:8091/
@@ -40,26 +42,26 @@ http://localhost:8081/ and Couchbase Server at http://localhost:8091/
     Docker Compose is now in the Docker CLI, try `docker compose up`
 
     Creating network "try-cb-nodejs_default" with the default driver
-    Pulling db (couchbase/server-sandbox:7.0.0-beta)...
+    Pulling db (couchbase/server-sandbox:7.0.0)...
     ...
     Building backend
     ...
     Building frontend
     ...
-    Creating couchbase-sandbox-7.0.0-beta ... done
+    Creating couchbase-sandbox-7.0.0      ... done
     Creating try-cb-api                   ... done
     Creating try-cb-fe                    ... done
-    Attaching to couchbase-sandbox-7.0.0-beta, try-cb-api, try-cb-fe
-    couchbase-sandbox-7.0.0-beta | Starting Couchbase Server -- Web UI available at http://<ip>:8091
-    couchbase-sandbox-7.0.0-beta | and logs available in /opt/couchbase/var/lib/couchbase/logs
-    couchbase-sandbox-7.0.0-beta | Configuring Couchbase Server.  Please wait (~60 sec)...
+    Attaching to couchbase-sandbox-7.0.0, try-cb-api, try-cb-fe
+    couchbase-sandbox-7.0.0 | Starting Couchbase Server -- Web UI available at http://<ip>:8091
+    couchbase-sandbox-7.0.0 | and logs available in /opt/couchbase/var/lib/couchbase/logs
+    couchbase-sandbox-7.0.0 | Configuring Couchbase Server.  Please wait (~60 sec)...
     try-cb-api  | wait-for-couchbase: checking http://db:8091/pools/default/buckets/travel-sample/
     try-cb-api  | wait-for-couchbase: polling for '.scopes | map(.name) | contains(["inventory", "
     try-cb-fe   | wait-for-it: waiting 400 seconds for backend:8080
     try-cb-api  | wait-for-couchbase: ...
-    couchbase-sandbox-7.0.0-beta | Configuration completed!
-    couchbase-sandbox-7.0.0-beta | Couchbase Admin UI: http://localhost:8091
-    couchbase-sandbox-7.0.0-beta | Login credentials: Administrator / password
+    couchbase-sandbox-7.0.0 | Configuration completed!
+    couchbase-sandbox-7.0.0 | Couchbase Admin UI: http://localhost:8091
+    couchbase-sandbox-7.0.0 | Login credentials: Administrator / password
     try-cb-api  | wait-for-couchbase: checking http://db:8094/api/cfg
     try-cb-api  | wait-for-couchbase: polling for '.status == "ok"'
     try-cb-api  | wait-for-couchbase: checking http://db:8094/api/index/hotels-index
@@ -105,7 +107,7 @@ alternative `mix-and-match.yml`. We'll look at a few useful scenarios here.
 ### Bring your own database
 
 If you wish to run this application against your own configuration of Couchbase
-Server, you will need version 7.0.0 beta or later with the `travel-sample`
+Server, you will need version 7.0.0 or later with the `travel-sample`
 bucket setup.
 
 > **_NOTE:_** if you are not using Docker to start up the API server, or the
