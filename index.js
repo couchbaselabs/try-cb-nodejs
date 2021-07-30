@@ -82,24 +82,29 @@ app.get('/api/airports',
   runAsync(async (req, res) => {
     const searchTerm = req.query.search
     let where
+    let options
+
     if (searchTerm.length === 3) {
       // FAA code
-      where = `faa = '${searchTerm.toUpperCase()}'`
+      where = 'faa = $FAA'
+      options = { parameters: { FAA: searchTerm.toUpperCase() } }
     } else if (
       searchTerm.length === 4 &&
       (searchTerm.toUpperCase() === searchTerm ||
         searchTerm.toLowerCase() === searchTerm)
     ) {
       // ICAO code
-      where = `icao = '${searchTerm.toUpperCase()}'`
+      where = 'icao = $ICAO'
+      options = { parameters: { ICAO: searchTerm.toUpperCase() } }
     } else {
       // Airport name
-      where = `LOWER(airportname) LIKE '%${searchTerm.toLowerCase()}%'`
+      where = 'CONTAINS(LOWER(airportname), $AIRPORT)'
+      options = { parameters: { AIRPORT: searchTerm.toLowerCase() } }
     }
 
     let qs = `SELECT airportname from \`travel-sample\`.inventory.airport WHERE ${ where };`
 
-    const result = await cluster.query(qs)
+    const result = await cluster.query(qs, options)
     const data = result.rows
     const context = [`N1QL query - scoped to inventory: ${qs}`]
     return res.send({data, context})
@@ -116,13 +121,20 @@ app.get('/api/flightPaths/:from/:to',
 
     let qs1 = `SELECT faa AS fromFaa
               FROM \`travel-sample\`.inventory.airport
-              WHERE airportname = '${fromAirport}'
+              WHERE airportname = $FROM
               UNION
               SELECT faa AS toFaa
               FROM \`travel-sample\`.inventory.airport
-              WHERE airportname = '${toAirport}';`
+              WHERE airportname = $TO;`
 
-    const result = await cluster.query(qs1)
+    const options1 = {
+      parameters: {
+        FROM: fromAirport,
+        TO: toAirport,
+      }
+    }
+
+    const result = await cluster.query(qs1, options1)
     const rows = result.rows
     if (rows.length !== 2) {
       return res.status(404).send({
@@ -137,13 +149,20 @@ app.get('/api/flightPaths/:from/:to',
         FROM \`travel-sample\`.inventory.route AS r
         UNNEST r.schedule AS s
         JOIN \`travel-sample\`.inventory.airline AS a ON KEYS r.airlineid
-        WHERE r.sourceairport = '${fromFaa}'
-        AND r.destinationairport = '${toFaa}'
-        AND s.day = ${dayOfWeek}
+        WHERE r.sourceairport = $FROM
+        AND r.destinationairport = $TO
+        AND s.day = $DAY
         ORDER BY a.name ASC;
       `
+    const options2 = {
+      parameters: {
+        FROM: fromFaa,
+        TO: toFaa,
+        DAY: dayOfWeek
+      }
+    }
 
-    const result2 = await cluster.query(qs2)
+    const result2 = await cluster.query(qs2, options2)
     const rows2 = result2.rows
     if (rows2.length === 0) {
       return res.status(404).send({
