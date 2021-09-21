@@ -244,7 +244,7 @@ tenants.route('/user/signup').post(
 
       const token = jwt.sign({user}, JWT_KEY)
 
-      return res.send({
+      return res.status(201).send({
         data: {token},
         context: [`KV insert - scoped to ${tenant}.users: document ${userDocKey}`]
       })
