@@ -190,13 +190,14 @@ const makeKey = key => key.toLowerCase()
 tenants.route('/user/login').post(
   runAsync(async (req, res) => {
     const tenant = makeKey( req.params.tenant )
-    const user = makeKey( req.body.user )
+    const user = req.body.user
+    const userKey = makeKey( user )
     const password = req.body.password
     var scope = bucket.scope(tenant)
     var users = scope.collection("users")
 
     try {
-      const result = await users.get(user)
+      const result = await users.get(userKey)
 
       if (result.value.password !== password) {
         return res.status(401).send({
@@ -244,7 +245,7 @@ tenants.route('/user/signup').post(
 
       const token = jwt.sign({user}, JWT_KEY)
 
-      return res.send({
+      return res.status(201).send({
         data: {token},
         context: [`KV insert - scoped to ${tenant}.users: document ${userDocKey}`]
       })
@@ -274,7 +275,7 @@ tenants.route('/user/:username/flights')
 
     if (username !== req.user.user) {
       return res.status(401).send({
-        error: 'Username does not match token username.',
+        error: `Username does not match token username. ${username} VS ${req.user.user}`,
       })
     }
 
@@ -288,7 +289,8 @@ tenants.route('/user/:username/flights')
 
       return res.send({
         data: inflated,
-        context: `KV get - scoped to ${tenant}.user: for ${ids.length} bookings in document ${userDocKey}`,
+        context:
+          [ `KV get - scoped to ${tenant}.users: for ${ids.length} bookings in document ${userDocKey}`]
       })
     } catch (err) {
       if (err instanceof couchbase.DocumentNotFoundError) {
@@ -340,10 +342,10 @@ tenants.route('/user/:username/flights')
 
       return res.send({
         data: {
-          added: newFlight,
+          added: [ newFlight ],
         },
         context:
-          [`KV mutateIn - scoped to ${tenant}.users: for bookings subdocument field in document ${userDocKey}`]
+          [`KV update - scoped to ${tenant}.users: for bookings subdocument field in document ${userDocKey}`]
       })
     } catch (err) {
       if (err instanceof couchbase.DocumentNotFoundError) {
