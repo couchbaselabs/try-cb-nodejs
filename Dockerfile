@@ -1,4 +1,4 @@
-FROM node:15-buster-slim
+FROM node:16-buster-slim
 
 LABEL maintainer="Couchbase"
 
